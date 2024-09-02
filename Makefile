@@ -3,7 +3,7 @@
 # Build the application
 all: build
 
-DB_URL=postgres://aman:aman123@localhost:5432/cookoff_backend?sslmode=disable
+DB_URL=postgres://username:password@localhost:5432/database_name?sslmode=disable
 DEV_URL=docker://postgres/15/dev
 SCHEMA_FILE=file://database/schema.sql
 MIGRATIONS_DIR=file://database/migrations
