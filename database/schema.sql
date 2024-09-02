@@ -1,27 +1,26 @@
 CREATE TABLE "user" (
-    "id" UUID NOT NULL UNIQUE,
-    "submissions" UUID,
-    "email" VARCHAR NOT NULL,
-    "regNo" VARCHAR NOT NULL,
-    "password" VARCHAR NOT NULL,
-    "role" CHAR NOT NULL,
-    "roundQualified" INTEGER NOT NULL,
-    "score" INTEGER,
-    "name" VARCHAR NOT NULL,
-    PRIMARY KEY("id")
+	"id" UUID NOT NULL UNIQUE,
+	"submissions" UUID,
+	"email" VARCHAR NOT NULL,
+	"regNo" VARCHAR NOT NULL,
+	"password" VARCHAR NOT NULL,
+	"role" CHAR NOT NULL,
+	"roundQualified" INTEGER NOT NULL,
+	"score" INTEGER,
+	"name" VARCHAR NOT NULL,
+	PRIMARY KEY("id")
 );
-
 
 
 CREATE TABLE "questions" (
 	"id" UUID NOT NULL UNIQUE,
-	"title" VARCHAR,
 	"description" TEXT,
+	"title" VARCHAR,
 	"inputFormat" TEXT,
-	"outputFormat" TEXT,
 	"points" INTEGER,
 	"round" SMALLINT NOT NULL,
 	"constraints" TEXT,
+	"outputFormat" TEXT,
 	"testcases" UUID,
 	PRIMARY KEY("id")
 );
@@ -30,12 +29,13 @@ CREATE TABLE "questions" (
 CREATE TABLE "submissions" (
 	"id" UUID NOT NULL UNIQUE,
 	"questionId" UUID NOT NULL,
-	"testcases_passed" INTEGER NOT NULL,
-	"testcases_failed" INTEGER NOT NULL,
-	"runtime" TIME NOT NULL,
-	"memory" VARCHAR NOT NULL,
-	"sub time" TIMESTAMP NOT NULL,
+	"testcases_passed" INTEGER,
+	"testcases_failed" INTEGER,
+	"runtime" TIME,
+	"memory" VARCHAR,
+	"sub time" TIMESTAMP,
 	"testcases_id" UUID,
+	"ref_id" UUID NOT NULL,
 	PRIMARY KEY("id")
 );
 

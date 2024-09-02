@@ -8,6 +8,7 @@ import (
 
 func main() {
 	server := server.NewServer()
+	fmt.Print("Server started at port 8080")
 
 	err := server.ListenAndServe()
 	if err != nil {
