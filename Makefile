@@ -3,6 +3,11 @@
 # Build the application
 all: build
 
+DB_URL=postgres://username:password@localhost:5432/database_name?sslmode=disable
+DEV_URL=docker://postgres/15/dev
+SCHEMA_FILE=file://database/schema.sql
+MIGRATIONS_DIR=file://database/migrations
+
 build:
 	@echo "Building..."
 	
@@ -48,6 +53,20 @@ watch:
 
 generate:
 	@sqlc generate
+
+apply-schema:
+	@echo "Applying schema to database..."
+	atlas schema apply \
+		--url "$(DB_URL)" \
+		--to "$(SCHEMA_FILE)" \
+		--dev-url "$(DEV_URL)"
+
+migrate:
+	@echo "Generating migration diff..."
+	atlas migrate diff cookoff_backend \
+		--dir "$(MIGRATIONS_DIR)" \
+		--to "$(SCHEMA_FILE)" \
+		--dev-url "$(DEV_URL)"
 
 
 .PHONY: all build run test clean watch generate

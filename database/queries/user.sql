@@ -1,4 +1,5 @@
 -- :name CreateUser :one
-INSERT INTO users (id, email, first_name, last_name)
-VALUES ($1, $2, $3, $4)
+INSERT INTO "user" (id, submissions, email, "regNo", password, role, "roundQualified", "score", name)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
 RETURNING *;
+
