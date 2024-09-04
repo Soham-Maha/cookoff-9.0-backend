@@ -1,65 +1,65 @@
 CREATE TABLE "user" (
 	"id" UUID NOT NULL UNIQUE,
-	"submissions" UUID,
-	"email" VARCHAR NOT NULL,
-	"regNo" VARCHAR NOT NULL,
-	"password" VARCHAR NOT NULL,
-	"role" CHAR NOT NULL,
+	"email" TEXT NOT NULL UNIQUE, 
+	"regNo" TEXT NOT NULL UNIQUE,
+	"password" TEXT NOT NULL,
+	"role" TEXT NOT NULL,
 	"roundQualified" INTEGER NOT NULL,
 	"score" INTEGER,
-	"name" VARCHAR NOT NULL,
+	"name" TEXT NOT NULL,
 	PRIMARY KEY("id")
 );
-
 
 CREATE TABLE "questions" (
 	"id" UUID NOT NULL UNIQUE,
 	"description" TEXT,
-	"title" VARCHAR,
+	"title" TEXT,
 	"inputFormat" TEXT,
 	"points" INTEGER,
-	"round" SMALLINT NOT NULL,
+	"round" INTEGER NOT NULL,
 	"constraints" TEXT,
 	"outputFormat" TEXT,
 	"testcases" UUID,
 	PRIMARY KEY("id")
 );
 
-
 CREATE TABLE "submissions" (
 	"id" UUID NOT NULL UNIQUE,
-	"questionId" UUID NOT NULL,
+	"question_id" UUID NOT NULL,
 	"testcases_passed" INTEGER,
 	"testcases_failed" INTEGER,
-	"runtime" TIME,
-	"memory" VARCHAR,
+	"runtime" DECIMAL,
 	"sub time" TIMESTAMP,
 	"testcases_id" UUID,
-	"ref_id" UUID NOT NULL,
+	"language_id" INTEGER NOT NULL,
+	"description" TEXT,
+	"memory" INTEGER,
+	"user_id" UUID,
 	PRIMARY KEY("id")
 );
-
 
 CREATE TABLE "testcases" (
 	"id" UUID NOT NULL UNIQUE,
 	"expected_output" TEXT,
-	"memory" VARCHAR,
+	"memory" TEXT,
 	"input" TEXT,
 	"hidden" BOOLEAN,
 	"runtime" TIME,
 	PRIMARY KEY("id")
 );
 
-
-ALTER TABLE "user"
-ADD FOREIGN KEY("submissions") REFERENCES "submissions"("id")
-ON UPDATE NO ACTION ON DELETE NO ACTION;
 ALTER TABLE "submissions"
-ADD FOREIGN KEY("questionId") REFERENCES "questions"("id")
+ADD FOREIGN KEY("question_id") REFERENCES "questions"("id")
 ON UPDATE NO ACTION ON DELETE NO ACTION;
+
 ALTER TABLE "questions"
 ADD FOREIGN KEY("testcases") REFERENCES "testcases"("id")
 ON UPDATE NO ACTION ON DELETE NO ACTION;
+
 ALTER TABLE "submissions"
 ADD FOREIGN KEY("testcases_id") REFERENCES "testcases"("id")
+ON UPDATE NO ACTION ON DELETE NO ACTION;
+
+ALTER TABLE "submissions"
+ADD FOREIGN KEY("user_id") REFERENCES "user"("id")
 ON UPDATE NO ACTION ON DELETE NO ACTION;
