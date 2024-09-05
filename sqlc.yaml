@@ -8,13 +8,3 @@ sql:
         out: "internal/db"
         sql_package: "pgx/v5"
         package: "db"
-        overrides:
-          - db_type: "uuid"
-            go_type:
-              import: "github.com/segmentio/ksuid"
-              type: "KSUID"
-            nullable: true
-          - db_type: "uuid"
-            go_type:
-              import: "github.com/segmentio/ksuid"
-              type: "KSUID"
