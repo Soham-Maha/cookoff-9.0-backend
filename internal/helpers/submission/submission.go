@@ -24,14 +24,18 @@ type Payload struct {
 	Submissions []Submission `json:"submissions"`
 }
 
-func CreateSubmission(ctx context.Context, question_id uuid.UUID, language_id int, source string) {
+func CreateSubmission(ctx context.Context, questionID string, language_id int, source string) ([]byte, error) {
 	callback_url := os.Getenv("CALLBACK_URL")
 
+	question_id, err := uuid.Parse(questionID)
+	if err != nil {
+		return nil, err
+	}
 	query := db.New(database.DBPool)
 	testcases, err := query.GetTestCases(ctx, question_id)
 	if err != nil {
 		logger.Errof("Error getting test cases for question_id %d: %v", question_id, err)
-		return
+		return nil, err
 	}
 	payload := Payload{
 		Submissions: make([]Submission, len(testcases)),
@@ -49,10 +53,10 @@ func CreateSubmission(ctx context.Context, question_id uuid.UUID, language_id in
 	payloadJSON, err := json.Marshal(payload)
 	if err != nil {
 		logger.Errof("Error marshaling payload: %v", err)
-		return
+		return nil, err
 	}
 
-	logger.Infof(string(payloadJSON))
+	return payloadJSON, nil
 }
 
 func b64(data string) string {
