@@ -1,13 +1,4 @@
 services:
-  valkey:
-    image: docker.io/bitnami/valkey:latest
-    ports:
-      - "6379:6379"
-    volumes:
-      - "valkey_data:/bitnami/valkey/data"
-    env_file:
-      - .env
-
   postgres:
     image: postgres:latest
     ports:
@@ -15,7 +6,16 @@ services:
     env_file:
       - .env
     volumes:
-      - "postgres_data:/var/lib/postgres/data"
+      - "postgres_data:/var/lib/postgresql/data"
+
+  dragonfly:
+    image: docker.dragonflydb.io/dragonflydb/dragonfly
+    ports:
+      - "6379:6379"
+    env_file:
+      - .env
+    volumes:
+      - dragonflydata:/data
 
   api:
     build: .
@@ -26,10 +26,10 @@ services:
     restart: on-failure:5
     depends_on:
       - postgres
-      - valkey
+      - dragonfly
 
 volumes:
-  valkey_data:
-    driver: local
   postgres_data:
+    driver: local
+  dragonflydata:
     driver: local
