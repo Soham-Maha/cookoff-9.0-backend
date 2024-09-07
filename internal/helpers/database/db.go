@@ -5,11 +5,12 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/CodeChefVIT/cookoff-backend/internal/db"
 	logger "github.com/CodeChefVIT/cookoff-backend/internal/helpers/logging"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-var DBPool *pgxpool.Pool
+var Queries *db.Queries
 
 func Init() {
 	dbHost := os.Getenv("POSTGRES_HOST")
@@ -35,24 +36,25 @@ func Init() {
 	logger.Infof(dsn)
 
 	var err error
-	DBPool, err = pgxpool.New(context.Background(), dsn)
+	pool, err := pgxpool.New(context.Background(), dsn)
 	if err != nil {
 		logger.Errof("Unable to connect to database: %v", err)
-		return
+		panic(err)
 	}
 
 	logger.Infof("Connected to the database successfully")
-	Ping()
+	Queries = db.New(pool)
+	Ping(pool)
 }
 
-func Ping() {
-	if DBPool == nil {
+func Ping(pool *pgxpool.Pool) {
+	if pool == nil {
 		logger.Errof("Database connection is not initialized")
 		return
 	}
 
 	ctx := context.Background()
-	err := DBPool.Ping(ctx)
+	err := pool.Ping(ctx)
 	if err != nil {
 		logger.Errof("Unable to ping the database: %v", err)
 		return
