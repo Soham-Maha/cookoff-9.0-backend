@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"context"
+	"database/sql"
 	"net/http"
 
 	"github.com/CodeChefVIT/cookoff-backend/internal/db"
@@ -96,4 +97,69 @@ func DeleteQuestion(w http.ResponseWriter, r *http.Request) {
 		httphelpers.WriteError(w, http.StatusBadRequest, err)
 		return
 	}
+}
+
+func UpdateQuestion(w http.ResponseWriter, r *http.Request) {
+	ctx := context.Background()
+
+	questionIdStr := chi.URLParam(r, "question_id")
+	question_id, err := uuid.Parse(questionIdStr)
+
+	if err != nil {
+		httphelpers.WriteError(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	var updateQuestion Question
+	httphelpers.ParseJSON(r, &updateQuestion)
+
+	question, err := database.Queries.GetQuestion(ctx, question_id)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			httphelpers.WriteError(w, http.StatusNotFound, err)
+		} else {
+			httphelpers.WriteError(w, http.StatusInternalServerError, err)
+		}
+	}
+	nulVal := pgtype.Int4{
+        Int32: 0,       
+        Valid: false,   
+    }
+
+	if updateQuestion.Description != nil {
+		question.Description = updateQuestion.Description
+	}
+	if updateQuestion.Title != nil {
+		question.Title = updateQuestion.Title
+	}
+	if updateQuestion.InputFormat != nil {
+		question.InputFormat = updateQuestion.InputFormat
+	}
+	if updateQuestion.Points != nulVal{
+		question.Points = updateQuestion.Points
+	}
+	if updateQuestion.Round != 0 {
+		question.Round = updateQuestion.Round
+	}
+	if updateQuestion.Constraints != nil {
+		question.Constraints = updateQuestion.Constraints
+	}
+	if updateQuestion.OutputFormat != nil {
+		question.OutputFormat = updateQuestion.OutputFormat
+	}
+
+	err = database.Queries.UpdateQuestion(ctx, db.UpdateQuestionParams{
+		Description: question.Description,
+		Title: question.Title,
+		InputFormat: question.InputFormat,
+		Points: question.Points,
+		Round: question.Round,
+		Constraints: question.Constraints,
+		OutputFormat: question.OutputFormat,
+		ID: question_id,
+	})
+	if err != nil {
+		httphelpers.WriteError(w, http.StatusInternalServerError, err)
+	}
+	httphelpers.WriteJSON(w, http.StatusOK, question)
 }

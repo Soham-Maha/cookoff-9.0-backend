@@ -14,3 +14,9 @@ RETURNING *;
 -- name: DeleteQuestion :exec
 DELETE FROM "questions" 
 WHERE "id" = $1;
+
+-- name: UpdateQuestion :exec
+UPDATE "questions" 
+SET description = $1, title = $2, "inputFormat" = $3, points = $4, round = $5, constraints = $6, "outputFormat" = $7
+WHERE id = $8;
+
