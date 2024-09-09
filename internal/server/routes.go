@@ -15,7 +15,7 @@ func (s *Server) RegisterRoutes() http.Handler {
 	r.Get("/ping", controllers.HealthCheck)
 	r.Post("/submit", controllers.SubmitCode)
 
-
+    r.Post("/token/refresh", controllers.RefreshToken)
 	r.Post("/question/create", controllers.CreateQuestion)
 	r.Get("/question", controllers.GetAllQuestion)
 	r.Get("/question/{question_id}", controllers.GetQuestionById)
