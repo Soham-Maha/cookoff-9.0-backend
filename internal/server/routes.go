@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/CodeChefVIT/cookoff-backend/internal/controllers"
+	// "github.com/CodeChefVIT/cookoff-backend/internal/middlewares"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 )
@@ -15,12 +16,15 @@ func (s *Server) RegisterRoutes() http.Handler {
 	r.Get("/ping", controllers.HealthCheck)
 	r.Post("/submit", controllers.SubmitCode)
 
-
 	r.Post("/question/create", controllers.CreateQuestion)
 	r.Get("/question", controllers.GetAllQuestion)
 	r.Get("/question/{question_id}", controllers.GetQuestionById)
 	r.Delete("/question/{question_id}", controllers.DeleteQuestion)
 	r.Patch("/question/{question_id}", controllers.UpdateQuestion)
 
+	r.Post("/login/user", controllers.LoginHandler)
+
+	// Example Protected Route:
+	// r.Post("/route", middlewares.JWTAuthMiddleware(http.HandlerFunc(controllers.LoginHandler)).(http.HandlerFunc))
 	return r
 }
