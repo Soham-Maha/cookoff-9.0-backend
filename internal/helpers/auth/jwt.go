@@ -2,13 +2,14 @@ package helpers
 
 import (
 	"errors"
+	"os"
 	"time"
 
 	"github.com/CodeChefVIT/cookoff-backend/internal/db"
 	"github.com/golang-jwt/jwt/v5"
 )
 
-var jwtKey = []byte("my_secret_key")
+var jwtKey = []byte(os.Getenv("JWT_KEY"))
 
 type Claims struct {
 	Username string `json:"username"`

@@ -1,4 +1,4 @@
-CREATE TABLE IF NOT EXISTS "user" (
+CREATE TABLE "user" (
 	"id" UUID NOT NULL UNIQUE,
 	"email" TEXT NOT NULL UNIQUE, 
 	"regNo" TEXT NOT NULL UNIQUE,
@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS "user" (
 	PRIMARY KEY("id")
 );
 
-CREATE TABLE IF NOT EXISTS "questions" (
+CREATE TABLE "questions" (
 	"id" UUID NOT NULL UNIQUE,
 	"description" TEXT,
 	"title" TEXT,
@@ -22,7 +22,7 @@ CREATE TABLE IF NOT EXISTS "questions" (
 	PRIMARY KEY("id")
 );
 
-CREATE TABLE IF NOT EXISTS "submissions" (
+CREATE TABLE "submissions" (
 	"id" UUID NOT NULL UNIQUE,
 	"question_id" UUID NOT NULL,
 	"testcases_passed" INTEGER DEFAULT 0,
@@ -38,7 +38,7 @@ CREATE TABLE IF NOT EXISTS "submissions" (
 	PRIMARY KEY("id")
 );
 
-CREATE TABLE IF NOT EXISTS "testcases" (
+CREATE TABLE "testcases" (
 	"id" UUID NOT NULL UNIQUE,
 	"expected_output" TEXT,
 	"memory" TEXT,
