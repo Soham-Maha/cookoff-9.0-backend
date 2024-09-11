@@ -8,6 +8,7 @@ import (
 
 	"github.com/CodeChefVIT/cookoff-backend/internal/db"
 	"github.com/CodeChefVIT/cookoff-backend/internal/helpers/database"
+	httphelpers "github.com/CodeChefVIT/cookoff-backend/internal/helpers/http"
 	logger "github.com/CodeChefVIT/cookoff-backend/internal/helpers/logging"
 	"github.com/CodeChefVIT/cookoff-backend/internal/helpers/submission"
 	"github.com/google/uuid"
@@ -26,7 +27,7 @@ func SubmitCode(w http.ResponseWriter, r *http.Request) {
 	var req subreq
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
-		http.Error(w, "Invalid request payload", http.StatusBadRequest)
+		httphelpers.WriteError(w, http.StatusBadRequest, "Invalid request payload")
 		return
 	}
 
@@ -35,14 +36,14 @@ func SubmitCode(w http.ResponseWriter, r *http.Request) {
 	payload, err := submission.CreateSubmission(ctx, question_id, req.LanguageID, req.SourceCode)
 	if err != nil {
 		logger.Errof("Error creating submission: %v", err)
-		http.Error(w, "Failed to create submission", http.StatusInternalServerError)
+		httphelpers.WriteError(w, http.StatusInternalServerError, "Failed to create submission")
 		return
 	}
 
 	subID, err := uuid.NewV7()
 	if err != nil {
 		logger.Errof("Error in generating uuid for submission: %v", err)
-		http.Error(w, "Error in generating uuid for submission", http.StatusInternalServerError)
+		httphelpers.WriteError(w, http.StatusInternalServerError, "Error in generating uuid for submission")
 		return
 	}
 
@@ -50,7 +51,7 @@ func SubmitCode(w http.ResponseWriter, r *http.Request) {
 	resp, err := http.Post(judge0URL, "application/json", bytes.NewBuffer(payload))
 	if err != nil {
 		logger.Errof("Error sending request to Judge0: %v", err)
-		http.Error(w, "Failed to send request to Judge0", http.StatusInternalServerError)
+		httphelpers.WriteError(w, http.StatusInternalServerError, "Failed to send request to Judge0")
 		return
 	}
 	defer resp.Body.Close()
@@ -58,7 +59,7 @@ func SubmitCode(w http.ResponseWriter, r *http.Request) {
 	err = submission.StoreTokens(ctx, subID, resp)
 	if err != nil {
 		logger.Errof("Error storing tokens for submission ID %s: %v", subID, err)
-		http.Error(w, "Error storing tokens for the submission", http.StatusInternalServerError)
+		httphelpers.WriteError(w, http.StatusInternalServerError, "Error storing tokens for the submission")
 		return
 	}
 
@@ -75,7 +76,7 @@ func SubmitCode(w http.ResponseWriter, r *http.Request) {
 	})
 	if err != nil {
 		logger.Errof("Error creating submission in database: %v", err)
-		http.Error(w, "Error creating submission in database", http.StatusInternalServerError)
+		httphelpers.WriteError(w, http.StatusInternalServerError, "Error creating submission in database")
 		return
 	}
 
