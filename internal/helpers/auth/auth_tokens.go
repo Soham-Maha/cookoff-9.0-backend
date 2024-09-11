@@ -99,9 +99,9 @@ func (tm *AuthTokenManager) VerifyRefreshToken(tokenString string) (bool, error)
 
     _ , err = tm.client.Get(context.Background(), fmt.Sprintf("refresh_token:%s", tokenString)).Result()
     if err == redis.Nil {
-        return false, fmt.Errorf("refresh token not found")
+        return false, fmt.Errorf("refresh token expired or not found")
     } else if err != nil {
-        return false, err
+        return false, fmt.Errorf("error retrieving refresh token: %v", err)
     }
     return true, nil
 }
