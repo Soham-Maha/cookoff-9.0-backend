@@ -1,22 +1,22 @@
 package controllers
 
 import (
+    "time"
     "encoding/json"
     "net/http"
     "github.com/CodeChefVIT/cookoff-backend/internal/helpers/auth"
 )
 
 func RefreshToken(w http.ResponseWriter, r *http.Request) {
-    RefreshToken := r.FormValue("refresh_token")
+    ctx := r.Context()
+    refreshToken, ok := ctx.Value("refresh_token").(string)
 
-    if RefreshToken == "" {
+    if !ok || refreshToken == "" {
         http.Error(w, "Refresh token is required", http.StatusBadRequest)
         return
     }
 
-    ctx := r.Context()
-
-    UserID, err := auth.Tokens.GetUserID(ctx, RefreshToken)
+    UserID, err := auth.Tokens.GetUserID(ctx, refreshToken)
     if err != nil {
         http.Error(w, "Invalid or expired refresh token", http.StatusUnauthorized)
         return
@@ -29,21 +29,15 @@ func RefreshToken(w http.ResponseWriter, r *http.Request) {
         return
     }
 
-    oldAccessToken := r.Header.Get("Authorization") 
-    err = auth.Tokens.DeleteAccessToken(ctx, oldAccessToken)
-    if err != nil {
-        http.Error(w, "Failed to delete old access token", http.StatusInternalServerError)
-        return
+    cookie := &http.Cookie{
+        Name:     "access_token",         
+        Value:    newAccessToken,        
+        Expires:  time.Now().Add(30* time.Minute), 
+        HttpOnly: true,                   
+        Secure:   true,                   
+        Path:     "/",                   
     }
-
-    // Save the new access token
-    err = auth.Tokens.AddAccessToken(ctx, newAccessToken, UserID)
-    if err != nil {
-        http.Error(w, "Failed to save new access token", http.StatusInternalServerError)
-        return
-    }
-
-    // Return the new access token
+    http.SetCookie(w, cookie)
     response := map[string]string{
         "access_token": newAccessToken,
     }
