@@ -13,7 +13,7 @@ func (s *Server) RegisterRoutes() http.Handler {
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
 	tokenManager := auth.Tokens
-	r.With(custom_middleware.VerifyRefreshTokenMiddleware(tokenManager)).Get("/token/refresh",controllers.RefreshToken)
+	r.With(custom_middleware.VerifyRefreshTokenMiddleware(tokenManager)).Post("/token/refresh",controllers.RefreshToken)
 	r.Get("/ping", controllers.HealthCheck)
 	r.Post("/submit", controllers.SubmitCode)
     r.Post("/token/refresh", controllers.RefreshToken)
