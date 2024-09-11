@@ -3,10 +3,10 @@ package controllers
 import (
 	"net/http"
 
-	"github.com/CodeChefVIT/cookoff-backend/internal/helpers/auth"
+	helpers "github.com/CodeChefVIT/cookoff-backend/internal/helpers/auth"
 	"github.com/CodeChefVIT/cookoff-backend/internal/helpers/database"
 	httphelpers "github.com/CodeChefVIT/cookoff-backend/internal/helpers/http"
-	"github.com/CodeChefVIT/cookoff-backend/internal/helpers/logging"
+	logger "github.com/CodeChefVIT/cookoff-backend/internal/helpers/logging"
 )
 
 type LoginRequest struct {
@@ -36,14 +36,23 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	token, err := helpers.GenerateJWT(&user)
+	tokenString, expirationTime, err := helpers.GenerateJWT(&user)
 	if err != nil {
 		logger.Errof("Failed to generate JWT for user: %s, err: %v", user.Email, err)
 		httphelpers.WriteError(w, http.StatusUnauthorized, "failed to generate token")
 		return
 	}
 
+	http.SetCookie(w, &http.Cookie{
+		Name:     "jwt_token",
+		Value:    tokenString,
+		Expires:  expirationTime,
+		HttpOnly: true,
+		Secure:   true,
+		Path:     "/",
+	})
+
 	httphelpers.WriteJSON(w, http.StatusOK, map[string]string{
-		"token": token,
+		"message": "Login successful",
 	})
 }

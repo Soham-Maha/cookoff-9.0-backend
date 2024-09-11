@@ -4,9 +4,12 @@ import (
 	"net/http"
 
 	"github.com/CodeChefVIT/cookoff-backend/internal/controllers"
-	// "github.com/CodeChefVIT/cookoff-backend/internal/middlewares"
+	helpers "github.com/CodeChefVIT/cookoff-backend/internal/helpers/auth"
+	httphelpers "github.com/CodeChefVIT/cookoff-backend/internal/helpers/http"
+
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/go-chi/jwtauth/v5"
 )
 
 func (s *Server) RegisterRoutes() http.Handler {
@@ -22,9 +25,15 @@ func (s *Server) RegisterRoutes() http.Handler {
 	r.Delete("/question/{question_id}", controllers.DeleteQuestion)
 	r.Patch("/question/{question_id}", controllers.UpdateQuestion)
 
-	r.Post("/login/user", controllers.LoginHandler)
+	r.Group(func(r chi.Router) {
+		r.Use(jwtauth.Verifier(helpers.TokenAuth))
+		r.Use(jwtauth.Authenticator(helpers.TokenAuth))
 
-	// Example Protected Route:
-	// r.Post("/route", middlewares.JWTAuthMiddleware(http.HandlerFunc(controllers.LoginHandler)).(http.HandlerFunc))
+		r.Get("/protected", func(w http.ResponseWriter, r *http.Request) {
+			httphelpers.WriteJSON(w, http.StatusOK, "Test")
+		})
+	})
+
+	r.Post("/login/user", controllers.LoginHandler)
 	return r
 }

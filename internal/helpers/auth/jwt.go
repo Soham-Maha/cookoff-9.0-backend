@@ -1,48 +1,26 @@
 package helpers
 
 import (
-	"errors"
+	"github.com/go-chi/jwtauth/v5"
 	"os"
 	"time"
 
 	"github.com/CodeChefVIT/cookoff-backend/internal/db"
-	"github.com/golang-jwt/jwt/v5"
 )
 
-var jwtKey = []byte(os.Getenv("JWT_KEY"))
+var TokenAuth *jwtauth.JWTAuth
 
-type Claims struct {
-	Username string `json:"username"`
-	Role     string `json:"role"`
-	jwt.RegisteredClaims
+func InitJWT() {
+	TokenAuth = jwtauth.New("HS256", []byte(os.Getenv("JWT_KEY")), nil)
 }
 
-func GenerateJWT(user *db.User) (string, error) {
+func GenerateJWT(user *db.User) (string, time.Time, error) {
 	expirationTime := time.Now().Add(time.Hour / 2)
-	claims := &Claims{
-		Username: user.Name,
-		Role:     user.Role,
-		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(expirationTime),
-		},
-	}
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString(jwtKey)
-}
 
-func ValidateJWT(tokenString string) (*Claims, error) {
-	claims := &Claims{}
-	token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
-		return jwtKey, nil
+	_, tokenString, err := TokenAuth.Encode(map[string]interface{}{
+		"username": user.Name,
+		"role":     user.Role,
+		"exp":      expirationTime.Unix(),
 	})
-
-	if err != nil {
-		return nil, err
-	}
-
-	if !token.Valid {
-		return nil, errors.New("invalid token")
-	}
-
-	return claims, nil
+	return tokenString, expirationTime, err
 }
