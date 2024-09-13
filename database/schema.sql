@@ -34,7 +34,7 @@ CREATE TABLE "submissions" (
 	"description" TEXT,
 	"memory" INTEGER,
 	"user_id" UUID,
-	"ref_id" TEXT,
+	"status" TEXT,
 	PRIMARY KEY("id")
 );
 
