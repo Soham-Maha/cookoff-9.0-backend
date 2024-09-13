@@ -37,10 +37,16 @@ const getTestCases = `-- name: GetTestCases :many
 SELECT id, expected_output, memory, input, hidden, runtime, question_id 
 FROM "testcases"
 WHERE "question_id" = $1
+  AND (CASE WHEN $2 = TRUE THEN hidden = FALSE ELSE TRUE END)
 `
 
-func (q *Queries) GetTestCases(ctx context.Context, questionID uuid.UUID) ([]Testcase, error) {
-	rows, err := q.db.Query(ctx, getTestCases, questionID)
+type GetTestCasesParams struct {
+	QuestionID uuid.UUID
+	Column2    interface{}
+}
+
+func (q *Queries) GetTestCases(ctx context.Context, arg GetTestCasesParams) ([]Testcase, error) {
+	rows, err := q.db.Query(ctx, getTestCases, arg.QuestionID, arg.Column2)
 	if err != nil {
 		return nil, err
 	}
