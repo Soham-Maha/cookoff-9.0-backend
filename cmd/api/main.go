@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	helpers "github.com/CodeChefVIT/cookoff-backend/internal/helpers/auth"
+	"github.com/CodeChefVIT/cookoff-backend/internal/helpers/auth"
 	database "github.com/CodeChefVIT/cookoff-backend/internal/helpers/database"
 	logger "github.com/CodeChefVIT/cookoff-backend/internal/helpers/logging"
 	"github.com/CodeChefVIT/cookoff-backend/internal/helpers/submission"
@@ -12,10 +12,10 @@ import (
 
 func main() {
 	logger.InitLogger()
-	server := server.NewServer()
 	database.Init()
-	helpers.InitJWT()
+	auth.InitJWT()
 	submission.Init()
+	server := server.NewServer()
 
 	logger.Infof("Server started at port 8080")
 

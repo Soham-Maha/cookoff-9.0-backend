@@ -2,7 +2,6 @@ package server
 
 import (
 	"github.com/CodeChefVIT/cookoff-backend/internal/controllers"
-	httphelpers "github.com/CodeChefVIT/cookoff-backend/internal/helpers/http"
 	"net/http"
 
 	"github.com/CodeChefVIT/cookoff-backend/internal/helpers/auth"
@@ -25,13 +24,11 @@ func (s *Server) RegisterRoutes() http.Handler {
 	r.Post("/login/user", controllers.LoginHandler)
 	r.Post("/token/refresh", controllers.RefreshTokenHandler)
 
-	r.Group(func(r chi.Router) {
-		r.Use(jwtauth.Verifier(auth.TokenAuth))
-		r.Use(jwtauth.Authenticator(auth.TokenAuth))
+	r.Group(func(protected chi.Router) {
+		protected.Use(jwtauth.Verifier(auth.TokenAuth))
+		protected.Use(jwtauth.Authenticator(auth.TokenAuth))
 
-		r.Get("/protected", func(w http.ResponseWriter, r *http.Request) {
-			httphelpers.WriteJSON(w, http.StatusOK, "Test")
-		})
+		protected.Get("/protected", controllers.ProtectedHandler)
 	})
 
 	return r

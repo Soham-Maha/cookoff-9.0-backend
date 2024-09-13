@@ -21,7 +21,7 @@ func RefreshTokenHandler(w http.ResponseWriter, r *http.Request) {
 	claims, err := jwtauth.VerifyToken(helpers.TokenAuth, cookie.Value)
 	if err != nil || claims == nil {
 		logger.Errof("Invalid refresh token: %v", err)
-		httphelpers.WriteError(w, http.StatusUnauthorized, "invalid refresh token")
+		httphelpers.WriteError(w, http.StatusUnauthorized, "invalid refresh token: "+err.Error())
 		return
 	}
 
