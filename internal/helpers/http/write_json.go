@@ -8,10 +8,7 @@ import (
 func WriteJSON(writer http.ResponseWriter, status int, v any) {
 	writer.Header().Add("Content-Type", "application/json")
 	writer.WriteHeader(status)
-	err := json.NewEncoder(writer).Encode(map[string]any{
-		"status": "success",
-		"code":   status,
-		"data":   v})
+	err := json.NewEncoder(writer).Encode(v)
 	if err != nil {
 		panic(err)
 	}
@@ -21,11 +18,7 @@ func WriteJSON(writer http.ResponseWriter, status int, v any) {
 func WriteError(w http.ResponseWriter, status int, v any) {
 	w.Header().Add("Content-Type", "application/json")
 	w.WriteHeader(status)
-	err := json.NewEncoder(w).Encode(map[string]any{
-		"status": "error",
-		"code":   status,
-		"message": v,
-	})
+	err := json.NewEncoder(w).Encode(v)
 	if err != nil {
 		panic(err)
 	}
