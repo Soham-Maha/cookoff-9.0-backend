@@ -36,7 +36,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	accessToken, accessExp, err := helpers.GenerateJWT(&user,false)
+	accessToken, accessExp, err := helpers.GenerateJWT(&user, false)
 	if err != nil {
 		logger.Errof("Failed to generate access token for user: %s, err: %v", user.Email, err)
 		httphelpers.WriteError(w, http.StatusUnauthorized, "failed to generate token")
@@ -68,7 +68,14 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		Path:     "/",
 	})
 
-	httphelpers.WriteJSON(w, http.StatusOK, map[string]string{
+	data := map[string]any{
+		"username": user.Name,
+		"round":    user.RoundQualified,
+		"score":    user.Score,
+	}
+
+	httphelpers.WriteJSON(w, http.StatusOK, map[string]any{
 		"message": "Login successful",
+		"user":    data,
 	})
 }
