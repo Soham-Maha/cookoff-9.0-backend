@@ -33,32 +33,30 @@ func Init() {
 		dbPort,
 	)
 
-	logger.Infof(dsn)
-
 	var err error
 	pool, err := pgxpool.New(context.Background(), dsn)
 	if err != nil {
-		logger.Errof("Unable to connect to database: %v", err)
+		logger.Errof("Unable to connect to postgres: %v", err)
 		panic(err)
 	}
 
-	logger.Infof("Connected to the database successfully")
+	logger.Infof("Connected to the postgres successfully")
 	Queries = db.New(pool)
 	Ping(pool)
 }
 
 func Ping(pool *pgxpool.Pool) {
 	if pool == nil {
-		logger.Errof("Database connection is not initialized")
+		logger.Errof("Postgres connection is not initialized")
 		return
 	}
 
 	ctx := context.Background()
 	err := pool.Ping(ctx)
 	if err != nil {
-		logger.Errof("Unable to ping the database: %v", err)
+		logger.Errof("Unable to ping the postgres: %v", err)
 		return
 	}
 
-	logger.Infof("Database ping successful")
+	logger.Infof("Postgres ping successful")
 }

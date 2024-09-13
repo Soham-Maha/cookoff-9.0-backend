@@ -32,9 +32,9 @@ func Init() {
 		PoolTimeout:  10 * time.Second,
 	})
 	if err := client.Ping(context.Background()).Err(); err != nil {
-		logger.Errof("Redis Init Failed: " + err.Error())
+		logger.Errof("Dragonfly Init Failed: " + err.Error())
 	}
-	logger.Infof("Connect to dragonflydb")
+	logger.Infof("Connected to dragonflyd")
 	Tokens = &TokenManager{client: client}
 }
 
