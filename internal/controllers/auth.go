@@ -36,17 +36,33 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tokenString, expirationTime, err := helpers.GenerateJWT(&user)
+	accessToken, accessExp, err := helpers.GenerateJWT(&user,false)
 	if err != nil {
-		logger.Errof("Failed to generate JWT for user: %s, err: %v", user.Email, err)
+		logger.Errof("Failed to generate access token for user: %s, err: %v", user.Email, err)
+		httphelpers.WriteError(w, http.StatusUnauthorized, "failed to generate token")
+		return
+	}
+
+	refreshToken, refreshExp, err := helpers.GenerateJWT(&user, true)
+	if err != nil {
+		logger.Errof("Failed to generate refresh token for user: %s, err: %v", user.Email, err)
 		httphelpers.WriteError(w, http.StatusUnauthorized, "failed to generate token")
 		return
 	}
 
 	http.SetCookie(w, &http.Cookie{
-		Name:     "jwt_token",
-		Value:    tokenString,
-		Expires:  expirationTime,
+		Name:     "jwt",
+		Value:    accessToken,
+		Expires:  accessExp,
+		HttpOnly: true,
+		Secure:   true,
+		Path:     "/",
+	})
+
+	http.SetCookie(w, &http.Cookie{
+		Name:     "refresh_token",
+		Value:    refreshToken,
+		Expires:  refreshExp,
 		HttpOnly: true,
 		Secure:   true,
 		Path:     "/",

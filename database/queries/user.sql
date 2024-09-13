@@ -6,3 +6,7 @@ RETURNING *;
 SELECT id, email, "regNo", password, role, "roundQualified", "score", name
 FROM "user"
 WHERE email = $1;
+-- name: GetUserByUsername :one
+SELECT id, email, "regNo", password, role, "roundQualified", "score", name
+FROM "user"
+WHERE name = $1;
