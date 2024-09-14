@@ -31,14 +31,13 @@ func GenerateJWT(user *db.User, isRefresh bool) (string, time.Time, error) {
 			"exp":      expirationTime.Unix(),
 		})
 		return tokenString, expirationTime, err
-	} else {
-		expirationTime = time.Now().Add(time.Hour * 2)
-		_, tokenString, err := TokenAuth.Encode(map[string]interface{}{
-			"username": user.Name,
-			"type":     "refresh",
-			"exp":      expirationTime.Unix(),
-		})
-		return tokenString, expirationTime, err
 	}
 
+	expirationTime = time.Now().Add(time.Hour * 2)
+	_, tokenString, err := TokenAuth.Encode(map[string]interface{}{
+		"username": user.Name,
+		"type":     "refresh",
+		"exp":      expirationTime.Unix(),
+	})
+	return tokenString, expirationTime, err
 }
