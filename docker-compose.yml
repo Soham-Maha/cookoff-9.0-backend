@@ -24,7 +24,7 @@ services:
     restart: on-failure:5
     depends_on:
       - postgres
-      - dragonfly
+      - redis
 
 volumes:
   postgres_data:
