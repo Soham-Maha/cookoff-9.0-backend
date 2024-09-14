@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/CodeChefVIT/cookoff-backend/internal/db"
 	"github.com/CodeChefVIT/cookoff-backend/internal/helpers/database"
 	logger "github.com/CodeChefVIT/cookoff-backend/internal/helpers/logging"
 	"github.com/google/uuid"
@@ -32,7 +33,7 @@ type Payload struct {
 func CreateSubmission(ctx context.Context, question_id uuid.UUID, language_id int, source string) ([]byte, error) {
 	callback_url := os.Getenv("CALLBACK_URL")
 
-	testcases, err := database.Queries.GetTestCases(ctx, question_id)
+	testcases, err := database.Queries.GetTestCases(ctx, db.GetTestCasesParams{QuestionID: question_id, Column2: false})
 	if err != nil {
 		logger.Errof("Error getting test cases for question_id %d: %v", question_id, err)
 		return nil, err
