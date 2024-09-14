@@ -26,6 +26,7 @@ func GenerateJWT(user *db.User, isRefresh bool) (string, time.Time, error) {
 		expirationTime = time.Now().Add(time.Hour / 4)
 		_, tokenString, err := TokenAuth.Encode(map[string]interface{}{
 			"username": user.Name,
+			"user_id":  user.ID,
 			"role":     user.Role,
 			"type":     "access",
 			"exp":      expirationTime.Unix(),
@@ -35,9 +36,9 @@ func GenerateJWT(user *db.User, isRefresh bool) (string, time.Time, error) {
 
 	expirationTime = time.Now().Add(time.Hour*1 + time.Minute*30)
 	_, tokenString, err := TokenAuth.Encode(map[string]interface{}{
-		"user_id":   user.ID,
-		"type": "refresh",
-		"exp":  expirationTime.Unix(),
+		"user_id": user.ID,
+		"type":    "refresh",
+		"exp":     expirationTime.Unix(),
 	})
 	return tokenString, expirationTime, err
 }
