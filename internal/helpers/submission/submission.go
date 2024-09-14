@@ -76,6 +76,14 @@ func StoreTokens(ctx context.Context, subID uuid.UUID, r *http.Response) error {
 	return nil
 }
 
+func GetSubID(ctx context.Context, token string) (string, error) {
+	subID, err := Tokens.GetSubID(ctx, token)
+	if err != nil {
+		return "", err
+	}
+	return subID, nil
+}
+
 func b64(data string) string {
 	return base64.StdEncoding.EncodeToString([]byte(data))
 }
