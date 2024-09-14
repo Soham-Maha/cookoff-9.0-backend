@@ -9,6 +9,7 @@ import (
 	"context"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const createSubmission = `-- name: CreateSubmission :exec
@@ -31,6 +32,28 @@ func (q *Queries) CreateSubmission(ctx context.Context, arg CreateSubmissionPara
 		arg.LanguageID,
 	)
 	return err
+}
+
+const getSubmission = `-- name: GetSubmission :one
+SELECT 
+    testcases_passed, 
+    testcases_failed 
+FROM 
+    submissions 
+WHERE 
+    id = $1
+`
+
+type GetSubmissionRow struct {
+	TestcasesPassed pgtype.Int4
+	TestcasesFailed pgtype.Int4
+}
+
+func (q *Queries) GetSubmission(ctx context.Context, id uuid.UUID) (GetSubmissionRow, error) {
+	row := q.db.QueryRow(ctx, getSubmission, id)
+	var i GetSubmissionRow
+	err := row.Scan(&i.TestcasesPassed, &i.TestcasesFailed)
+	return i, err
 }
 
 const getTestCases = `-- name: GetTestCases :many
@@ -71,4 +94,29 @@ func (q *Queries) GetTestCases(ctx context.Context, arg GetTestCasesParams) ([]T
 		return nil, err
 	}
 	return items, nil
+}
+
+const updateSubmission = `-- name: UpdateSubmission :exec
+UPDATE "submissions"
+SET "testcases_passed" = $1, "testcases_failed" = $2, "runtime" = $3, "memory" = $4
+WHERE "id" = $5
+`
+
+type UpdateSubmissionParams struct {
+	TestcasesPassed pgtype.Int4
+	TestcasesFailed pgtype.Int4
+	Runtime         pgtype.Numeric
+	Memory          pgtype.Int4
+	ID              uuid.UUID
+}
+
+func (q *Queries) UpdateSubmission(ctx context.Context, arg UpdateSubmissionParams) error {
+	_, err := q.db.Exec(ctx, updateSubmission,
+		arg.TestcasesPassed,
+		arg.TestcasesFailed,
+		arg.Runtime,
+		arg.Memory,
+		arg.ID,
+	)
+	return err
 }
