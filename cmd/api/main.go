@@ -13,8 +13,9 @@ import (
 func main() {
 	logger.InitLogger()
 	database.Init()
+	database.InitCache()
 	auth.InitJWT()
-	submission.Init()
+	submission.Init(database.RedisClient)
 	server := server.NewServer()
 
 	logger.Infof("Server started at port 8080")
