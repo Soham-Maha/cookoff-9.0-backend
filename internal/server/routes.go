@@ -1,8 +1,9 @@
 package server
 
 import (
-	"github.com/CodeChefVIT/cookoff-backend/internal/controllers"
 	"net/http"
+
+	"github.com/CodeChefVIT/cookoff-backend/internal/controllers"
 
 	"github.com/CodeChefVIT/cookoff-backend/internal/helpers/auth"
 	"github.com/go-chi/chi/v5"
