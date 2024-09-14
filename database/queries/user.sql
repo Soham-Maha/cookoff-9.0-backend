@@ -10,3 +10,7 @@ WHERE email = $1;
 SELECT id, email, "regNo", password, role, "roundQualified", "score", name
 FROM "user"
 WHERE name = $1;
+-- name: GetUserById :one
+SELECT id, email, "regNo", password, role, "roundQualified", "score", name
+FROM "user"
+WHERE id = $1;
