@@ -17,7 +17,7 @@ func InitCache() {
 	port := os.Getenv("REDIS_PORT")
 	pswd := os.Getenv("REDIS_PASSWORD")
 
-	client := redis.NewClient(&redis.Options{
+	RedisClient = redis.NewClient(&redis.Options{
 		Addr:         fmt.Sprintf("%s:%s", host, port),
 		DB:           0,
 		Password:     pswd,
@@ -27,7 +27,7 @@ func InitCache() {
 		PoolTimeout:  2 * time.Second,
 	})
 
-	if err := client.Ping(context.Background()).Err(); err != nil {
+	if err := RedisClient.Ping(context.Background()).Err(); err != nil {
 		panic(err)
 	}
 	logger.Infof("Connected to DragonflyDB")
