@@ -63,8 +63,8 @@ func SubmitCode(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// user_id, _ := r.Context().Value("user_id").(string)
-	userID, _ := uuid.Parse("d3f1c8c2-b6d9-4822-9222-67b8d93fd9d5")
+	user_id, _ := r.Context().Value("user_id").(string)
+	userID, _ := uuid.Parse(user_id)
 	qID, _ := uuid.Parse(req.QuestionID)
 	nullUserID := uuid.NullUUID{UUID: userID, Valid: true}
 
