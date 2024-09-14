@@ -7,15 +7,13 @@ services:
       - .env
     volumes:
       - "postgres_data:/var/lib/postgresql/data"
-
-  dragonfly:
-    image: docker.dragonflydb.io/dragonflydb/dragonfly
+  redis:
+    image: redis:latest
+    container_name: redis
     ports:
       - "6379:6379"
     env_file:
       - .env
-    volumes:
-      - dragonflydata:/data
 
   api:
     build: .
@@ -30,6 +28,4 @@ services:
 
 volumes:
   postgres_data:
-    driver: local
-  dragonflydata:
     driver: local
