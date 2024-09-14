@@ -8,6 +8,7 @@ import (
 	httphelpers "github.com/CodeChefVIT/cookoff-backend/internal/helpers/http"
 	logger "github.com/CodeChefVIT/cookoff-backend/internal/helpers/logging"
 	"github.com/go-chi/jwtauth/v5"
+	"github.com/google/uuid"
 )
 
 func RefreshTokenHandler(w http.ResponseWriter, r *http.Request) {
@@ -25,23 +26,30 @@ func RefreshTokenHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userName, ok := claims.PrivateClaims()["username"].(string)
+	userId, ok := claims.PrivateClaims()["user_id"].(string)
 	if !ok {
-		logger.Errof("Invalid token claims, email not found")
+		logger.Errof("Invalid token claims, user_id not found")
 		httphelpers.WriteError(w, http.StatusUnauthorized, "invalid token claims")
 		return
 	}
 
-	user, err := database.Queries.GetUserByUsername(r.Context(), userName)
+	userIdUUID, err := uuid.Parse(userId)
 	if err != nil {
-		logger.Errof("User not found: %s, err: %v", userName, err)
+		logger.Errof("Invalid user_id: %s, err: %v", userId, err)
+		httphelpers.WriteError(w, http.StatusUnauthorized, "invalid user_id")
+		return
+	}
+
+	user, err := database.Queries.GetUserById(r.Context(), userIdUUID)
+	if err != nil {
+		logger.Errof("User not found: %s, err: %v", user.Name, err)
 		httphelpers.WriteError(w, http.StatusUnauthorized, "user not found")
 		return
 	}
 
 	accessToken, accessExp, err := helpers.GenerateJWT(&user, false)
 	if err != nil {
-		logger.Errof("Failed to generate new access token for user: %s, err: %v", userName, err)
+		logger.Errof("Failed to generate new access token for user: %s, err: %v", user.Name, err)
 		httphelpers.WriteError(w, http.StatusUnauthorized, "failed to generate token")
 		return
 	}
@@ -57,7 +65,7 @@ func RefreshTokenHandler(w http.ResponseWriter, r *http.Request) {
 
 	refreshToken, refreshExp, err := helpers.GenerateJWT(&user, true)
 	if err != nil {
-		logger.Errof("Failed to generate new refresh token for user: %s, err: %v", userName, err)
+		logger.Errof("Failed to generate new refresh token for user: %s, err: %v", user.Name, err)
 		httphelpers.WriteError(w, http.StatusUnauthorized, "failed to generate token")
 		return
 	}
