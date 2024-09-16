@@ -8,6 +8,7 @@ import (
 	"github.com/CodeChefVIT/cookoff-backend/internal/db"
 	"github.com/CodeChefVIT/cookoff-backend/internal/helpers/database"
 	httphelpers "github.com/CodeChefVIT/cookoff-backend/internal/helpers/http"
+	"github.com/go-chi/jwtauth/v5"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 )
@@ -21,6 +22,17 @@ type Question struct {
 	Round        int32       `json:"round"`
 	Constraints  *string     `json:"constraints"`
 	OutputFormat *string     `json:"output_format"`
+}
+
+type User struct {
+	ID             uuid.UUID `json:"id"`
+	Email          string `json:"email"`
+	RegNo          string `json:"reg_no"`
+	Password       string `json:"password"`
+	Role           string	`json:"role"`
+	RoundQualified int32 `json:"round_qualified"`
+	Score          pgtype.Int4 `json:"score"`
+	Name           string `json:"name"`
 }
 
 func GetAllQuestion(w http.ResponseWriter, r *http.Request) {
@@ -57,22 +69,26 @@ func GetQuestionById(w http.ResponseWriter, r *http.Request) {
 
 func GetQuestionsByRound(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	var question Question
-	err := httphelpers.ParseJSON(r, &question)
+	_, claims, err := jwtauth.FromContext(r.Context())
 	if err != nil {
-		httphelpers.WriteError(w, http.StatusInternalServerError, err)
+		httphelpers.WriteError(w, http.StatusUnauthorized, "unauthorized")
+		return 
+	}
+	idStr, ok := claims["user_id"].(string)
+	if !ok {
+		http.Error(w, "Role not found in token", http.StatusUnauthorized)
 		return
 	}
-	var user db.User
-	err = httphelpers.ParseJSON(r, &user)
+	id, err := uuid.Parse(idStr)
 	if err != nil {
+		httphelpers.WriteError(w, http.StatusInternalServerError ,"Could not parse user_id")
+	}
+
+	user, err := database.Queries.GetUserById(ctx, id)
+	if err != nil{
 		httphelpers.WriteError(w, http.StatusInternalServerError, err)
-		return
 	}
-	if question.Round != user.RoundQualified {
-		httphelpers.WriteError(w, http.StatusForbidden, "not allowed")
-		return
-	}
+	
 	questions, err := database.Queries.GetQuestionByRound(ctx, user.RoundQualified)
 	if err != nil {
 		httphelpers.WriteError(w, http.StatusBadRequest, err)

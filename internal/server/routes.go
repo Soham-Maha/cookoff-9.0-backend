@@ -21,7 +21,7 @@ func (s *Server) RegisterRoutes(taskClient *asynq.Client) http.Handler {
 	r.Put("/callback", func(w http.ResponseWriter, r *http.Request) {
 		controllers.CallbackUrl(w, r, taskClient)
 	})
-
+	
 	r.Post("/login/user", controllers.LoginHandler)
 	r.Post("/token/refresh", controllers.RefreshTokenHandler)
 	r.Group(func(protected chi.Router) {
@@ -29,10 +29,10 @@ func (s *Server) RegisterRoutes(taskClient *asynq.Client) http.Handler {
 		protected.Use(jwtauth.Authenticator(auth.TokenAuth))
 		
 		protected.Get("/protected", controllers.ProtectedHandler)
-		protected.Post("/question/create", controllers.CreateQuestion)
+		protected.With(middlewares.RoleAuthorizationMiddleware("admin")).Post("/question/create", controllers.CreateQuestion)
 		protected.With(middlewares.RoleAuthorizationMiddleware("admin")).Get("/questions", controllers.GetAllQuestion)
+		protected.Get("/question/round", controllers.GetQuestionsByRound)
 		protected.With(middlewares.RoleAuthorizationMiddleware("admin")).Get("/question", controllers.GetQuestionById)
-		protected.With(middlewares.RoleAuthorizationMiddleware("user")).Get("/question/round", controllers.GetQuestionsByRound)
 		protected.With(middlewares.RoleAuthorizationMiddleware("admin")).Delete("/question", controllers.DeleteQuestion)
 		protected.With(middlewares.RoleAuthorizationMiddleware("admin")).Patch("/question", controllers.UpdateQuestion)
 	})
