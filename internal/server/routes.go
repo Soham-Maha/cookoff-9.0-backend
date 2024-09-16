@@ -20,18 +20,20 @@ func (s *Server) RegisterRoutes(taskClient *asynq.Client) http.Handler {
 	r.Put("/callback", func(w http.ResponseWriter, r *http.Request) {
 		controllers.CallbackUrl(w, r, taskClient)
 	})
-	r.Post("/question/create", controllers.CreateQuestion)
-	r.Get("/question", controllers.GetAllQuestion)
-	r.Get("/question/{question_id}", controllers.GetQuestionById)
-	r.Delete("/question/{question_id}", controllers.DeleteQuestion)
-	r.Patch("/question/{question_id}", controllers.UpdateQuestion)
+
 	r.Post("/login/user", controllers.LoginHandler)
 	r.Post("/token/refresh", controllers.RefreshTokenHandler)
 	r.Group(func(protected chi.Router) {
 		protected.Use(jwtauth.Verifier(auth.TokenAuth))
 		protected.Use(jwtauth.Authenticator(auth.TokenAuth))
-
+		
 		protected.Get("/protected", controllers.ProtectedHandler)
+		protected.Post("/question/create", controllers.CreateQuestion)
+		protected.Get("/questions", controllers.GetAllQuestion)
+		protected.Get("/question", controllers.GetQuestionById)
+		protected.Get("/question/round", controllers.GetQuestionsByRound)
+		protected.Delete("/question", controllers.DeleteQuestion)
+		protected.Patch("/question", controllers.UpdateQuestion)
 	})
 
 	return r
