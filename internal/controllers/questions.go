@@ -24,11 +24,6 @@ type Question struct {
 }
 
 func GetAllQuestion(w http.ResponseWriter, r *http.Request) {
-	ok := RoleFromToken(w, r, "admin")
-	if !ok {
-		httphelpers.WriteError(w, http.StatusUnauthorized, "unauthorized")
-	}
-
 	ctx := r.Context()
 	fetchedQuestions, err := database.Queries.GetQuestions(ctx)
 	if err != nil {
@@ -43,7 +38,6 @@ func GetQuestionById(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		httphelpers.WriteError(w, http.StatusUnauthorized, "unauthorized")
 	}
-
 	ctx := r.Context()
 	var question Question
 	err := httphelpers.ParseJSON(r, &question)
@@ -62,11 +56,6 @@ func GetQuestionById(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetQuestionsByRound(w http.ResponseWriter, r *http.Request) {
-	ok := RoleFromToken(w, r, "admin")
-	if !ok {
-		httphelpers.WriteError(w, http.StatusUnauthorized, "unauthorized")
-	}
-
 	ctx := r.Context()
 	var question Question
 	err := httphelpers.ParseJSON(r, &question)
@@ -74,8 +63,17 @@ func GetQuestionsByRound(w http.ResponseWriter, r *http.Request) {
 		httphelpers.WriteError(w, http.StatusInternalServerError, err)
 		return
 	}
-
-	questions, err := database.Queries.GetQuestionByRound(ctx, question.Round)
+	var user db.User
+	err = httphelpers.ParseJSON(r, &user)
+	if err != nil {
+		httphelpers.WriteError(w, http.StatusInternalServerError, err)
+		return
+	}
+	if question.Round != user.RoundQualified {
+		httphelpers.WriteError(w, http.StatusForbidden, "not allowed")
+		return
+	}
+	questions, err := database.Queries.GetQuestionByRound(ctx, user.RoundQualified)
 	if err != nil {
 		httphelpers.WriteError(w, http.StatusBadRequest, err)
 		return

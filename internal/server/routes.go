@@ -5,6 +5,7 @@ import (
 
 	"github.com/CodeChefVIT/cookoff-backend/internal/controllers"
 	"github.com/CodeChefVIT/cookoff-backend/internal/helpers/auth"
+	"github.com/CodeChefVIT/cookoff-backend/internal/middlewares"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/jwtauth/v5"
@@ -29,11 +30,11 @@ func (s *Server) RegisterRoutes(taskClient *asynq.Client) http.Handler {
 		
 		protected.Get("/protected", controllers.ProtectedHandler)
 		protected.Post("/question/create", controllers.CreateQuestion)
-		protected.Get("/questions", controllers.GetAllQuestion)
-		protected.Get("/question", controllers.GetQuestionById)
-		protected.Get("/question/round", controllers.GetQuestionsByRound)
-		protected.Delete("/question", controllers.DeleteQuestion)
-		protected.Patch("/question", controllers.UpdateQuestion)
+		protected.With(middlewares.RoleAuthorizationMiddleware("admin")).Get("/questions", controllers.GetAllQuestion)
+		protected.With(middlewares.RoleAuthorizationMiddleware("admin")).Get("/question", controllers.GetQuestionById)
+		protected.With(middlewares.RoleAuthorizationMiddleware("user")).Get("/question/round", controllers.GetQuestionsByRound)
+		protected.With(middlewares.RoleAuthorizationMiddleware("admin")).Delete("/question", controllers.DeleteQuestion)
+		protected.With(middlewares.RoleAuthorizationMiddleware("admin")).Patch("/question", controllers.UpdateQuestion)
 	})
 
 	return r
