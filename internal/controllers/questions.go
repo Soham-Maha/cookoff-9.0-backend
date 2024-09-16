@@ -24,17 +24,6 @@ type Question struct {
 	OutputFormat *string     `json:"output_format"`
 }
 
-type User struct {
-	ID             uuid.UUID `json:"id"`
-	Email          string `json:"email"`
-	RegNo          string `json:"reg_no"`
-	Password       string `json:"password"`
-	Role           string	`json:"role"`
-	RoundQualified int32 `json:"round_qualified"`
-	Score          pgtype.Int4 `json:"score"`
-	Name           string `json:"name"`
-}
-
 func GetAllQuestion(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	fetchedQuestions, err := database.Queries.GetQuestions(ctx)
