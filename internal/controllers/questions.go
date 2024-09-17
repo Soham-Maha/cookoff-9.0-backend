@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/CodeChefVIT/cookoff-backend/internal/db"
+	"github.com/CodeChefVIT/cookoff-backend/internal/helpers/auth"
 	"github.com/CodeChefVIT/cookoff-backend/internal/helpers/database"
 	httphelpers "github.com/CodeChefVIT/cookoff-backend/internal/helpers/http"
 	"github.com/go-chi/chi/v5"
@@ -36,16 +37,15 @@ func GetAllQuestion(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetQuestionById(w http.ResponseWriter, r *http.Request) {
-	ctx := context.Background()
-
-	questionIdStr := chi.URLParam(r, "question_id")
-	question_id, err := uuid.Parse(questionIdStr)
+	ctx := r.Context()
+	idStr := chi.URLParam(r, "question_id")
+	id, err := uuid.Parse(idStr)
 	if err != nil {
-		httphelpers.WriteError(w, http.StatusInternalServerError, err.Error())
+    httphelpers.WriteError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	fetchedQuestion, err := database.Queries.GetQuestion(ctx, question_id)
+	fetchedQuestion, err := database.Queries.GetQuestion(ctx, id)
 	if err != nil {
 		httphelpers.WriteError(w, http.StatusBadRequest, err.Error())
 		return
@@ -56,24 +56,11 @@ func GetQuestionById(w http.ResponseWriter, r *http.Request) {
 
 func GetQuestionsByRound(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	_, claims, err := jwtauth.FromContext(r.Context())
-	if err != nil {
-		httphelpers.WriteError(w, http.StatusUnauthorized, "unauthorized")
-		return
-	}
-	idStr, ok := claims["user_id"].(string)
-	if !ok {
-		http.Error(w, "Role not found in token", http.StatusUnauthorized)
-		return
-	}
-	id, err := uuid.Parse(idStr)
-	if err != nil {
-		httphelpers.WriteError(w, http.StatusInternalServerError, "Could not parse user_id")
-	}
+	id, _ := auth.GetUserID(w, r)
 
 	user, err := database.Queries.GetUserById(ctx, id)
 	if err != nil {
-		httphelpers.WriteError(w, http.StatusInternalServerError, err.Error())
+    httphelpers.WriteError(w, http.StatusInternalServerError, err.Error())
 	}
 
 	questions, err := database.Queries.GetQuestionByRound(ctx, user.RoundQualified)
@@ -125,6 +112,7 @@ func DeleteQuestion(w http.ResponseWriter, r *http.Request) {
 		httphelpers.WriteError(w, http.StatusBadRequest, err.Error())
 		return
 	}
+	httphelpers.WriteJSON(w, 200, map[string]string{"message":"Question successfully deleted"} )
 }
 
 func UpdateQuestion(w http.ResponseWriter, r *http.Request) {
