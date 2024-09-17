@@ -11,6 +11,7 @@ import (
 	httphelpers "github.com/CodeChefVIT/cookoff-backend/internal/helpers/http"
 	logger "github.com/CodeChefVIT/cookoff-backend/internal/helpers/logging"
 	"github.com/CodeChefVIT/cookoff-backend/internal/helpers/submission"
+	"github.com/go-chi/jwtauth/v5"
 	"github.com/google/uuid"
 )
 
@@ -63,7 +64,13 @@ func SubmitCode(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user_id, _ := r.Context().Value("user_id").(string)
+	_, claims, err := jwtauth.FromContext(r.Context())
+	if err != nil {
+		httphelpers.WriteError(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+
+	user_id, _ := claims["user_id"].(string)
 	userID, _ := uuid.Parse(user_id)
 	qID, _ := uuid.Parse(req.QuestionID)
 	nullUserID := uuid.NullUUID{UUID: userID, Valid: true}
