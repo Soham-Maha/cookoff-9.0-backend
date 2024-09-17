@@ -12,8 +12,8 @@ import (
 )
 
 const getUserByEmail = `-- name: GetUserByEmail :one
-SELECT id, email, "regNo", password, role, "roundQualified", "score", name
-FROM "user"
+SELECT id, email, reg_no, password, role, round_qualified, score, name
+FROM users
 WHERE email = $1
 `
 
@@ -34,8 +34,8 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 }
 
 const getUserById = `-- name: GetUserById :one
-SELECT id, email, "regNo", password, role, "roundQualified", "score", name
-FROM "user"
+SELECT id, email, reg_no, password, role, round_qualified, score, name
+FROM users
 WHERE id = $1
 `
 
@@ -56,8 +56,8 @@ func (q *Queries) GetUserById(ctx context.Context, id uuid.UUID) (User, error) {
 }
 
 const getUserByUsername = `-- name: GetUserByUsername :one
-SELECT id, email, "regNo", password, role, "roundQualified", "score", name
-FROM "user"
+SELECT id, email, reg_no, password, role, round_qualified, score, name
+FROM users
 WHERE name = $1
 `
 
