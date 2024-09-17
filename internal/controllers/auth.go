@@ -1,12 +1,14 @@
 package controllers
 
 import (
+	"errors"
 	"net/http"
 
 	helpers "github.com/CodeChefVIT/cookoff-backend/internal/helpers/auth"
 	"github.com/CodeChefVIT/cookoff-backend/internal/helpers/database"
 	httphelpers "github.com/CodeChefVIT/cookoff-backend/internal/helpers/http"
 	logger "github.com/CodeChefVIT/cookoff-backend/internal/helpers/logging"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type LoginRequest struct {
@@ -34,6 +36,16 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		logger.Errof("Invalid password for user: %s", user.Email)
 		httphelpers.WriteError(w, http.StatusUnauthorized, "invalid credentials")
 		return
+	}
+
+	if err := bcrypt.CompareHashAndPassword([]byte(req.Password), []byte(user.Password)); err != nil {
+		if errors.Is(err, bcrypt.ErrMismatchedHashAndPassword) {
+			httphelpers.WriteJSON(w, http.StatusBadRequest, map[string]string{
+				"message": "invalid password",
+			})
+			return
+		}
+		httphelpers.WriteError(w, http.StatusInternalServerError, err.Error())
 	}
 
 	accessToken, accessExp, err := helpers.GenerateJWT(&user, false)
