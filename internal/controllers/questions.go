@@ -99,18 +99,19 @@ func CreateQuestion(w http.ResponseWriter, r *http.Request) {
 func DeleteQuestion(w http.ResponseWriter, r *http.Request) {
 	ctx := context.Background()
 
-	var question Question
-	err := httphelpers.ParseJSON(r, &question)
-	if err != nil {
-		httphelpers.WriteError(w, http.StatusInternalServerError, err)
-		return
-	}
-
-	err = database.Queries.DeleteQuestion(ctx, question.ID)
+	idStr := chi.URLParam(r, "question_id")
+	id, err := uuid.Parse(idStr)
 	if err != nil {
 		httphelpers.WriteError(w, http.StatusBadRequest, err)
 		return
 	}
+
+	err = database.Queries.DeleteQuestion(ctx, id)
+	if err != nil {
+		httphelpers.WriteError(w, http.StatusBadRequest, err)
+		return
+	}
+	httphelpers.WriteJSON(w, 200, map[string]string{"message":"Question successfully deleted"} )
 }
 
 func UpdateQuestion(w http.ResponseWriter, r *http.Request) {
