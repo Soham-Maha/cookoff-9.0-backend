@@ -17,7 +17,6 @@ func (s *Server) RegisterRoutes(taskClient *asynq.Client) http.Handler {
 	r.Use(middleware.Logger)
 
 	r.Get("/ping", controllers.HealthCheck)
-	r.Post("/submit", controllers.SubmitCode)
 	r.Put("/callback", func(w http.ResponseWriter, r *http.Request) {
 		controllers.CallbackUrl(w, r, taskClient)
 	})
@@ -29,6 +28,8 @@ func (s *Server) RegisterRoutes(taskClient *asynq.Client) http.Handler {
 		protected.Use(jwtauth.Authenticator(auth.TokenAuth))
 		
 		protected.Get("/protected", controllers.ProtectedHandler)
+		protected.Post("/submit", controllers.SubmitCode)
+		protected.Post("/runcode", controllers.RunCode)
 		protected.With(middlewares.RoleAuthorizationMiddleware("admin")).Post("/question/create", controllers.CreateQuestion)
 		protected.With(middlewares.RoleAuthorizationMiddleware("admin")).Get("/questions", controllers.GetAllQuestion)
 		protected.Get("/question/round", controllers.GetQuestionsByRound)

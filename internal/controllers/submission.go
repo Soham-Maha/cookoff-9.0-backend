@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"net/http"
+	"net/url"
 	"os"
 
 	"github.com/CodeChefVIT/cookoff-backend/internal/db"
@@ -11,6 +12,7 @@ import (
 	httphelpers "github.com/CodeChefVIT/cookoff-backend/internal/helpers/http"
 	logger "github.com/CodeChefVIT/cookoff-backend/internal/helpers/logging"
 	"github.com/CodeChefVIT/cookoff-backend/internal/helpers/submission"
+	"github.com/go-chi/jwtauth/v5"
 	"github.com/google/uuid"
 )
 
@@ -20,8 +22,9 @@ type subreq struct {
 	QuestionID string `json:"question_id"`
 }
 
+var JUDGE0_URI = os.Getenv("JUDGE0_URI")
+
 func SubmitCode(w http.ResponseWriter, r *http.Request) {
-	JUDGE0_URI := os.Getenv("JUDGE0_URI")
 	ctx := r.Context()
 
 	var req subreq
@@ -47,8 +50,12 @@ func SubmitCode(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	judge0URL := JUDGE0_URI + "/submissions/batch?base64_encoded=true"
-	resp, err := http.Post(judge0URL, "application/json", bytes.NewBuffer(payload))
+	judge0URL, _ := url.Parse(JUDGE0_URI + "/submissions/batch")
+
+	params := url.Values{}
+	params.Add("base64_encoded", "true")
+	judge0URL.RawQuery = params.Encode()
+	resp, err := http.Post(judge0URL.String(), "application/json", bytes.NewBuffer(payload))
 	if err != nil {
 		logger.Errof("Error sending request to Judge0: %v", err)
 		httphelpers.WriteError(w, http.StatusInternalServerError, "Failed to send request to Judge0")
@@ -63,7 +70,13 @@ func SubmitCode(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user_id, _ := r.Context().Value("user_id").(string)
+	_, claims, err := jwtauth.FromContext(r.Context())
+	if err != nil {
+		httphelpers.WriteError(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+
+	user_id, _ := claims["user_id"].(string)
 	userID, _ := uuid.Parse(user_id)
 	qID, _ := uuid.Parse(req.QuestionID)
 	nullUserID := uuid.NullUUID{UUID: userID, Valid: true}
