@@ -33,7 +33,7 @@ func (s *Server) RegisterRoutes(taskClient *asynq.Client) http.Handler {
 		protected.With(middlewares.RoleAuthorizationMiddleware("admin")).Post("/question/create", controllers.CreateQuestion)
 		protected.With(middlewares.RoleAuthorizationMiddleware("admin")).Get("/questions", controllers.GetAllQuestion)
 		protected.Get("/question/round", controllers.GetQuestionsByRound)
-		protected.With(middlewares.RoleAuthorizationMiddleware("admin")).Get("/question", controllers.GetQuestionById)
+		protected.With(middlewares.RoleAuthorizationMiddleware("admin")).Get("/question/{question_id}", controllers.GetQuestionById)
 		protected.With(middlewares.RoleAuthorizationMiddleware("admin")).Delete("/question", controllers.DeleteQuestion)
 		protected.With(middlewares.RoleAuthorizationMiddleware("admin")).Patch("/question", controllers.UpdateQuestion)
 	})

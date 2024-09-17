@@ -6,9 +6,10 @@ import (
 	"net/http"
 
 	"github.com/CodeChefVIT/cookoff-backend/internal/db"
+	"github.com/CodeChefVIT/cookoff-backend/internal/helpers/auth"
 	"github.com/CodeChefVIT/cookoff-backend/internal/helpers/database"
 	httphelpers "github.com/CodeChefVIT/cookoff-backend/internal/helpers/http"
-	"github.com/go-chi/jwtauth/v5"
+	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 )
@@ -36,14 +37,14 @@ func GetAllQuestion(w http.ResponseWriter, r *http.Request) {
 
 func GetQuestionById(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	var question Question
-	err := httphelpers.ParseJSON(r, &question)
+	idStr := chi.URLParam(r, "question_id")
+	id, err := uuid.Parse(idStr)
 	if err != nil {
-		httphelpers.WriteError(w, http.StatusInternalServerError, err)
+		httphelpers.WriteError(w, http.StatusBadRequest, err)
 		return
 	}
 
-	fetchedQuestion, err := database.Queries.GetQuestion(ctx, question.ID)
+	fetchedQuestion, err := database.Queries.GetQuestion(ctx, id)
 	if err != nil {
 		httphelpers.WriteError(w, http.StatusBadRequest, err)
 		return
@@ -54,26 +55,13 @@ func GetQuestionById(w http.ResponseWriter, r *http.Request) {
 
 func GetQuestionsByRound(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	_, claims, err := jwtauth.FromContext(r.Context())
-	if err != nil {
-		httphelpers.WriteError(w, http.StatusUnauthorized, "unauthorized")
-		return 
-	}
-	idStr, ok := claims["user_id"].(string)
-	if !ok {
-		http.Error(w, "Role not found in token", http.StatusUnauthorized)
-		return
-	}
-	id, err := uuid.Parse(idStr)
-	if err != nil {
-		httphelpers.WriteError(w, http.StatusInternalServerError ,"Could not parse user_id")
-	}
+	id, _ := auth.GetUserID(w, r)
 
 	user, err := database.Queries.GetUserById(ctx, id)
-	if err != nil{
+	if err != nil {
 		httphelpers.WriteError(w, http.StatusInternalServerError, err)
 	}
-	
+
 	questions, err := database.Queries.GetQuestionByRound(ctx, user.RoundQualified)
 	if err != nil {
 		httphelpers.WriteError(w, http.StatusBadRequest, err)
