@@ -8,11 +8,11 @@ import (
 	"os"
 
 	"github.com/CodeChefVIT/cookoff-backend/internal/db"
+	"github.com/CodeChefVIT/cookoff-backend/internal/helpers/auth"
 	"github.com/CodeChefVIT/cookoff-backend/internal/helpers/database"
 	httphelpers "github.com/CodeChefVIT/cookoff-backend/internal/helpers/http"
 	logger "github.com/CodeChefVIT/cookoff-backend/internal/helpers/logging"
 	"github.com/CodeChefVIT/cookoff-backend/internal/helpers/submission"
-	"github.com/go-chi/jwtauth/v5"
 	"github.com/google/uuid"
 )
 
@@ -70,16 +70,19 @@ func SubmitCode(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, claims, err := jwtauth.FromContext(r.Context())
-	if err != nil {
-		httphelpers.WriteError(w, http.StatusUnauthorized, "unauthorized")
-		return
-	}
-
-	user_id, _ := claims["user_id"].(string)
-	userID, _ := uuid.Parse(user_id)
+	userID, _ := auth.GetUserID(w, r)
 	qID, _ := uuid.Parse(req.QuestionID)
 	nullUserID := uuid.NullUUID{UUID: userID, Valid: true}
+
+	qualified, err := auth.VerifyRound(ctx, userID, qID)
+	if err != nil {
+		httphelpers.WriteError(w, http.StatusNotFound, err.Error())
+		return
+	}
+	if !qualified {
+		httphelpers.WriteError(w, http.StatusForbidden, "User is not qualified for this round")
+		return
+	}
 
 	err = database.Queries.CreateSubmission(ctx, db.CreateSubmissionParams{
 		ID:         subID,

@@ -7,6 +7,7 @@ import (
 	"net/url"
 
 	"github.com/CodeChefVIT/cookoff-backend/internal/db"
+	"github.com/CodeChefVIT/cookoff-backend/internal/helpers/auth"
 	"github.com/CodeChefVIT/cookoff-backend/internal/helpers/database"
 	httphelpers "github.com/CodeChefVIT/cookoff-backend/internal/helpers/http"
 	logger "github.com/CodeChefVIT/cookoff-backend/internal/helpers/logging"
@@ -29,6 +30,17 @@ func RunCode(w http.ResponseWriter, r *http.Request) {
 	}
 
 	question_id, _ := uuid.Parse(req.QuestionID)
+	userID, _ := auth.GetUserID(w, r)
+
+	qualified, err := auth.VerifyRound(ctx, userID, question_id)
+	if err != nil {
+		httphelpers.WriteError(w, http.StatusNotFound, err.Error())
+		return
+	}
+	if !qualified {
+		httphelpers.WriteError(w, http.StatusForbidden, "User is not qualified for this round")
+		return
+	}
 
 	testcases, err := database.Queries.GetTestCases(ctx, db.GetTestCasesParams{QuestionID: question_id, Column2: true})
 	if err != nil {
