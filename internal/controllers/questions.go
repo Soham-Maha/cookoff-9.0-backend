@@ -35,10 +35,6 @@ func GetAllQuestion(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetQuestionById(w http.ResponseWriter, r *http.Request) {
-	ok := RoleFromToken(w, r, "admin")
-	if !ok {
-		httphelpers.WriteError(w, http.StatusUnauthorized, "unauthorized")
-	}
 	ctx := r.Context()
 	var question Question
 	err := httphelpers.ParseJSON(r, &question)
@@ -87,11 +83,6 @@ func GetQuestionsByRound(w http.ResponseWriter, r *http.Request) {
 }
 
 func CreateQuestion(w http.ResponseWriter, r *http.Request) {
-	ok := RoleFromToken(w, r, "admin")
-	if !ok {
-		httphelpers.WriteError(w, http.StatusUnauthorized, "unauthorized")
-	}
-
 	ctx := r.Context()
 	var question Question
 	err := httphelpers.ParseJSON(r, &question)
@@ -118,10 +109,6 @@ func CreateQuestion(w http.ResponseWriter, r *http.Request) {
 }
 
 func DeleteQuestion(w http.ResponseWriter, r *http.Request) {
-	ok := RoleFromToken(w, r, "admin")
-	if !ok {
-		httphelpers.WriteError(w, http.StatusUnauthorized, "unauthorized")
-	}
 	ctx := context.Background()
 
 	var question Question
@@ -139,10 +126,6 @@ func DeleteQuestion(w http.ResponseWriter, r *http.Request) {
 }
 
 func UpdateQuestion(w http.ResponseWriter, r *http.Request) {
-	ok := RoleFromToken(w, r, "admin")
-	if !ok {
-		httphelpers.WriteError(w, http.StatusUnauthorized, "unauthorized")
-	}
 	ctx := context.Background()
 
 	var updateQuestion Question
