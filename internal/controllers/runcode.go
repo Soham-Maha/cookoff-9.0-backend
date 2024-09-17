@@ -2,7 +2,6 @@ package controllers
 
 import (
 	"bytes"
-	"encoding/base64"
 	"encoding/json"
 	"net/http"
 	"os"
@@ -11,30 +10,12 @@ import (
 	"github.com/CodeChefVIT/cookoff-backend/internal/helpers/database"
 	httphelpers "github.com/CodeChefVIT/cookoff-backend/internal/helpers/http"
 	logger "github.com/CodeChefVIT/cookoff-backend/internal/helpers/logging"
+	"github.com/CodeChefVIT/cookoff-backend/internal/helpers/submission"
 	"github.com/google/uuid"
 )
 
-type judgeresp struct {
-	TestCaseID     string
-	StdOut         string `json:"stdout"`
-	Time           string `json:"time"`
-	Memory         int    `json:"memory"`
-	StdErr         string `json:"stderr"`
-	Token          string `json:"token"`
-	Message        string `json:"message"`
-	Status         Status `json:"status"`
-	CompilerOutput string `json:"compile_output"`
-}
-
-type subpayload struct {
-	LanguageID int    `json:"language_id"`
-	SourceCode string `json:"source_code"`
-	Input      string `json:"stdin"`
-	Output     string `json:"expected_output"`
-}
-
 type resp struct {
-	Result []judgeresp `json:"result"`
+	Result []submission.Judgeresp `json:"result"`
 }
 
 func RunCode(w http.ResponseWriter, r *http.Request) {
@@ -58,16 +39,16 @@ func RunCode(w http.ResponseWriter, r *http.Request) {
 
 	judge0URL := JUDGE0_URI + "/submissions/?base64_encoded=true&wait=true"
 
-	var payload subpayload
+	var payload submission.Submission
 	response := resp{
-		Result: make([]judgeresp, len(testcases)),
+		Result: make([]submission.Judgeresp, len(testcases)),
 	}
 	for i, testcase := range testcases {
-		payload = subpayload{
+		payload = submission.Submission{
 			LanguageID: req.LanguageID,
-			SourceCode: b64(req.SourceCode),
-			Input:      b64(*testcase.Input),
-			Output:     b64(*testcase.ExpectedOutput),
+			SourceCode: submission.B64(req.SourceCode),
+			Input:      submission.B64(*testcase.Input),
+			Output:     submission.B64(*testcase.ExpectedOutput),
 		}
 
 		payloadJSON, err := json.Marshal(payload)
@@ -77,8 +58,6 @@ func RunCode(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		logger.Infof(string(payloadJSON))
-
 		result, err := http.Post(judge0URL, "application/json", bytes.NewBuffer(payloadJSON))
 		if err != nil {
 			logger.Errof("Error making request to Judge0: %v", err)
@@ -87,7 +66,7 @@ func RunCode(w http.ResponseWriter, r *http.Request) {
 		}
 		defer result.Body.Close()
 
-		var data judgeresp
+		var data submission.Judgeresp
 		data.TestCaseID = testcase.ID.String()
 		if err = json.NewDecoder(result.Body).Decode(&data); err != nil {
 			logger.Errof("Error decoding response from Judge0: %v", err)
@@ -95,7 +74,7 @@ func RunCode(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		data.CompilerOutput, _ = db64(data.CompilerOutput)
+		data.CompilerOutput, _ = submission.DecodeB64(data.CompilerOutput)
 		response.Result[i] = data
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -103,16 +82,4 @@ func RunCode(w http.ResponseWriter, r *http.Request) {
 		logger.Errof("Error encoding response: %v", err)
 		httphelpers.WriteError(w, http.StatusInternalServerError, "Error encoding response")
 	}
-}
-
-func b64(data string) string {
-	return base64.StdEncoding.EncodeToString([]byte(data))
-}
-
-func db64(encoded string) (string, error) {
-	decodedBytes, err := base64.StdEncoding.DecodeString(encoded)
-	if err != nil {
-		return "", err
-	}
-	return string(decodedBytes), nil
 }

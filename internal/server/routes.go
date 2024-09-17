@@ -26,13 +26,13 @@ func (s *Server) RegisterRoutes(taskClient *asynq.Client) http.Handler {
 	r.Patch("/question/{question_id}", controllers.UpdateQuestion)
 	r.Post("/login/user", controllers.LoginHandler)
 	r.Post("/token/refresh", controllers.RefreshTokenHandler)
-	r.Post("/runcode", controllers.RunCode)
 	r.Group(func(protected chi.Router) {
 		protected.Use(jwtauth.Verifier(auth.TokenAuth))
 		protected.Use(jwtauth.Authenticator(auth.TokenAuth))
 
 		protected.Get("/protected", controllers.ProtectedHandler)
 		protected.Post("/submit", controllers.SubmitCode)
+		protected.Post("/runcode", controllers.RunCode)
 	})
 
 	return r

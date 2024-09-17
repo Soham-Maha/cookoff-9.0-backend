@@ -2,7 +2,6 @@ package submission
 
 import (
 	"context"
-	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -13,14 +12,6 @@ import (
 	logger "github.com/CodeChefVIT/cookoff-backend/internal/helpers/logging"
 	"github.com/google/uuid"
 )
-
-type Submission struct {
-	LanguageID int    `json:"language_id"`
-	SourceCode string `json:"source_code"`
-	Input      string `json:"stdin"`
-	Output     string `json:"expected_output"`
-	Callback   string `json:"callback_url"`
-}
 
 type Token struct {
 	Token string `json:"token"`
@@ -44,10 +35,10 @@ func CreateSubmission(ctx context.Context, question_id uuid.UUID, language_id in
 
 	for i, testcase := range testcases {
 		payload.Submissions[i] = Submission{
-			SourceCode: b64(source),
+			SourceCode: B64(source),
 			LanguageID: language_id,
-			Input:      b64(*testcase.Input),
-			Output:     b64(*testcase.ExpectedOutput),
+			Input:      B64(*testcase.Input),
+			Output:     B64(*testcase.ExpectedOutput),
 			Callback:   callback_url,
 		}
 	}
@@ -82,8 +73,4 @@ func GetSubID(ctx context.Context, token string) (string, error) {
 		return "", err
 	}
 	return subID, nil
-}
-
-func b64(data string) string {
-	return base64.StdEncoding.EncodeToString([]byte(data))
 }
