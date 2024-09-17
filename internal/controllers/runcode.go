@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"net/http"
-	"os"
+	"net/url"
 
 	"github.com/CodeChefVIT/cookoff-backend/internal/db"
 	"github.com/CodeChefVIT/cookoff-backend/internal/helpers/database"
@@ -19,7 +19,6 @@ type resp struct {
 }
 
 func RunCode(w http.ResponseWriter, r *http.Request) {
-	JUDGE0_URI := os.Getenv("JUDGE0_URI")
 	ctx := r.Context()
 
 	var req subreq
@@ -37,7 +36,11 @@ func RunCode(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	judge0URL := JUDGE0_URI + "/submissions/?base64_encoded=true&wait=true"
+	judge0URL, _ := url.Parse(JUDGE0_URI + "/submissions/")
+	params := url.Values{}
+	params.Add("base64_encoded", "true")
+	params.Add("wait", "true")
+	judge0URL.RawQuery = params.Encode()
 
 	var payload submission.Submission
 	response := resp{
@@ -58,7 +61,7 @@ func RunCode(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		result, err := http.Post(judge0URL, "application/json", bytes.NewBuffer(payloadJSON))
+		result, err := http.Post(judge0URL.String(), "application/json", bytes.NewBuffer(payloadJSON))
 		if err != nil {
 			logger.Errof("Error making request to Judge0: %v", err)
 			httphelpers.WriteError(w, http.StatusInternalServerError, "Error making request to Judge0")
