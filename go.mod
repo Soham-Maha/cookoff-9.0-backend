@@ -14,7 +14,10 @@ require (
 )
 
 require (
+	github.com/ajg/form v1.5.1 // indirect
+	github.com/go-chi/render v1.0.3 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
+	github.com/lib/pq v1.10.9 // indirect
 	github.com/robfig/cron/v3 v3.0.1 // indirect
 	github.com/spf13/cast v1.3.1 // indirect
 	golang.org/x/time v0.0.0-20190308202827-9d24e82272b4 // indirect

@@ -7,7 +7,7 @@ package db
 
 import (
 	"context"
-
+    "github.com/lib/pq"
 	"github.com/google/uuid"
 )
 
@@ -75,4 +75,71 @@ func (q *Queries) GetUserByUsername(ctx context.Context, name string) (User, err
 		&i.Name,
 	)
 	return i, err
+}
+const getAllUsers = `-- name: GetAllUsers :many
+SELECT id, email, reg_no, role, round_qualified, score, name
+FROM users
+`
+func (q *Queries) GetAllUsers(ctx context.Context) ([]User, error) {
+	rows, err := q.db.Query(ctx, getAllUsers)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var users []User
+	for rows.Next() {
+		var i User
+		if err := rows.Scan(
+			&i.ID,
+			&i.Email,
+			&i.RegNo,
+			&i.Password,
+			&i.Role,
+			&i.RoundQualified,
+			&i.Score,
+			&i.Name,
+		); err != nil {
+			return nil, err
+		}
+		users = append(users, i)
+	}
+	return users, nil
+}
+func (q *Queries) UpgradeUserToRound(ctx context.Context, userIDs []uuid.UUID, round int) error {
+	_, err := q.db.Exec(ctx, `-- name: UpgradeUserToRound :exec
+	UPDATE users
+	SET round_qualified = GREATEST(round_qualified, $2)
+	WHERE id = ANY($1::uuid[]);`, pq.Array(userIDs), round)
+	return err
+}
+func (q *Queries) BanUsers(ctx context.Context, userIDs []uuid.UUID) error {
+	_, err := q.db.Exec(ctx, `-- name: BanUser :exec
+	UPDATE users
+	SET banned = true
+	WHERE id = ANY($1::uuid[]);`, pq.Array(userIDs))
+	return err
+}
+func (q *Queries) UnbanUsers(ctx context.Context, userIDs []uuid.UUID) error {
+	_, err := q.db.Exec(ctx, `-- name: UnbanUser :exec
+	UPDATE users
+	SET banned = false
+	WHERE id = ANY($1::uuid[]);`, pq.Array(userIDs))
+	return err
+}
+func (q *Queries) EnableRound(ctx context.Context, roundNumber int) error {
+	_, err := q.db.Exec(ctx, `-- name: EnableRound :exec
+	UPDATE rounds
+	SET enabled = false;
+	
+	UPDATE rounds
+	SET enabled = true
+	WHERE round_number = $1;`, roundNumber)
+	return err
+}
+func (q *Queries) DisableRound(ctx context.Context, roundNumber int) error {
+	_, err := q.db.Exec(ctx, `-- name: DisableRound :exec
+	UPDATE rounds
+	SET enabled = false
+	WHERE round_number = $1;`, roundNumber)
+	return err
 }
