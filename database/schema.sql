@@ -44,7 +44,7 @@ CREATE TABLE testcases (
 	memory TEXT,
 	input TEXT,
 	hidden BOOLEAN,
-	runtime TIME,
+	runtime DECIMAL,
 	question_id UUID NOT NULL,
 	PRIMARY KEY(id)
 );

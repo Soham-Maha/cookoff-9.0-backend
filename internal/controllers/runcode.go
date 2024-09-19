@@ -58,12 +58,21 @@ func RunCode(w http.ResponseWriter, r *http.Request) {
 	response := resp{
 		Result: make([]submission.Judgeresp, len(testcases)),
 	}
+
+	runtime_mut, err := submission.RuntimeMut(req.LanguageID)
+	if err != nil {
+		httphelpers.WriteError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
 	for i, testcase := range testcases {
+		runtime, _ := testcase.Runtime.Float64Value()
 		payload = submission.Submission{
 			LanguageID: req.LanguageID,
 			SourceCode: submission.B64(req.SourceCode),
 			Input:      submission.B64(*testcase.Input),
 			Output:     submission.B64(*testcase.ExpectedOutput),
+			Runtime:    runtime.Float64 * float64(runtime_mut),
 		}
 
 		payloadJSON, err := json.Marshal(payload)
