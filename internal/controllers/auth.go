@@ -3,17 +3,77 @@ package controllers
 import (
 	"errors"
 	"net/http"
+	"os"
 
+	"github.com/CodeChefVIT/cookoff-backend/internal/db"
+	"github.com/CodeChefVIT/cookoff-backend/internal/helpers/auth"
 	helpers "github.com/CodeChefVIT/cookoff-backend/internal/helpers/auth"
 	"github.com/CodeChefVIT/cookoff-backend/internal/helpers/database"
 	httphelpers "github.com/CodeChefVIT/cookoff-backend/internal/helpers/http"
 	logger "github.com/CodeChefVIT/cookoff-backend/internal/helpers/logging"
+	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 	"golang.org/x/crypto/bcrypt"
 )
 
 type LoginRequest struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
+}
+
+type SignupRequest struct {
+	Email string `json:"email"`
+	Name  string `json:"name"`
+	RegNo string `json:"reg_no"`
+	Key   string `json:"fuck_you"`
+}
+
+func SignUp(w http.ResponseWriter, r *http.Request) {
+	var payload SignupRequest
+
+	if err := httphelpers.ParseJSON(r, &payload); err != nil {
+		httphelpers.WriteError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	if payload.Key != os.Getenv("SECRET_KEY_FUCKERS") {
+		httphelpers.WriteError(w, http.StatusUnauthorized, "I WILL POP YOUR CHERRY BRO")
+		return
+	}
+
+	passwd := auth.PasswordGenerator(6)
+	hashed, err := bcrypt.GenerateFromPassword([]byte(passwd), 10)
+	if err != nil {
+		httphelpers.WriteError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	id, err := uuid.NewV7()
+	if err != nil {
+		httphelpers.WriteError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	_, err = database.Queries.CreateUser(r.Context(), db.CreateUserParams{
+		ID:             id,
+		Email:          payload.Email,
+		RegNo:          payload.RegNo,
+		Password:       string(hashed),
+		Role:           "user",
+		RoundQualified: 0,
+		Score:          pgtype.Int4{},
+		Name:           payload.Name,
+	})
+	if err != nil {
+		httphelpers.WriteError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	httphelpers.WriteJSON(w, http.StatusOK, map[string]any{
+		"message":  "user added",
+		"email":    payload.Email,
+		"password": passwd,
+	})
 }
 
 func LoginHandler(w http.ResponseWriter, r *http.Request) {
