@@ -33,18 +33,9 @@ func CreateSubmission(ctx context.Context, question_id uuid.UUID, language_id in
 		Submissions: make([]Submission, len(testcases)),
 	}
 
-	var runtime_mut int
-	switch language_id {
-	case 50, 54, 60, 73, 63:
-		runtime_mut = 1
-	case 51, 62:
-		runtime_mut = 2
-	case 68:
-		runtime_mut = 3
-	case 71:
-		runtime_mut = 5
-	default:
-		return nil, errors.New("Invalid language ID")
+	runtime_mut, err := RuntimeMut(language_id)
+	if err != nil {
+		return nil, err
 	}
 
 	for i, testcase := range testcases {
