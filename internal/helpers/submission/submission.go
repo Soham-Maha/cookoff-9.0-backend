@@ -33,12 +33,28 @@ func CreateSubmission(ctx context.Context, question_id uuid.UUID, language_id in
 		Submissions: make([]Submission, len(testcases)),
 	}
 
+	var runtime_mut int
+	switch language_id {
+	case 50, 54, 60, 73, 63:
+		runtime_mut = 1
+	case 51, 62:
+		runtime_mut = 2
+	case 68:
+		runtime_mut = 3
+	case 71:
+		runtime_mut = 5
+	default:
+		return nil, errors.New("Invalid language ID")
+	}
+
 	for i, testcase := range testcases {
+		runtime, _ := testcase.Runtime.Float64Value()
 		payload.Submissions[i] = Submission{
 			SourceCode: B64(source),
 			LanguageID: language_id,
 			Input:      B64(*testcase.Input),
 			Output:     B64(*testcase.ExpectedOutput),
+			Runtime:    runtime.Float64 * float64(runtime_mut),
 			Callback:   callback_url,
 		}
 	}

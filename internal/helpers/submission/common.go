@@ -6,11 +6,12 @@ import (
 )
 
 type Submission struct {
-	LanguageID int    `json:"language_id"`
-	SourceCode string `json:"source_code"`
-	Input      string `json:"stdin"`
-	Output     string `json:"expected_output"`
-	Callback   string `json:"callback_url"`
+	LanguageID int     `json:"language_id"`
+	SourceCode string  `json:"source_code"`
+	Input      string  `json:"stdin"`
+	Output     string  `json:"expected_output"`
+	Runtime    float64 `json:"cpu_time_limit"`
+	Callback   string  `json:"callback_url"`
 }
 
 type Judgeresp struct {
