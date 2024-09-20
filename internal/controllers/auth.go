@@ -92,13 +92,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if user.Password != req.Password {
-		logger.Errof("Invalid password for user: %s", user.Email)
-		httphelpers.WriteError(w, http.StatusUnauthorized, "invalid credentials")
-		return
-	}
-
-	if err := bcrypt.CompareHashAndPassword([]byte(req.Password), []byte(user.Password)); err != nil {
+	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password)); err != nil {
 		if errors.Is(err, bcrypt.ErrMismatchedHashAndPassword) {
 			httphelpers.WriteJSON(w, http.StatusBadRequest, map[string]string{
 				"message": "invalid password",
