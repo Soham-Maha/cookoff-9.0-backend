@@ -2,6 +2,7 @@ package auth
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 
 	"github.com/CodeChefVIT/cookoff-backend/internal/helpers/database"
@@ -13,19 +14,19 @@ import (
 func GetUserID(w http.ResponseWriter, r *http.Request) (uuid.UUID, error) {
 	_, claims, err := jwtauth.FromContext(r.Context())
 	if err != nil {
-		httphelpers.WriteError(w, http.StatusUnauthorized, "unauthorized")
+		httphelpers.WriteError(w, http.StatusUnauthorized, fmt.Sprintf("unauthorized: %v", err))
 		return uuid.UUID{}, err
 	}
 
 	userID, ok := claims["user_id"].(string)
 	if !ok {
-		httphelpers.WriteError(w, http.StatusUnauthorized, "unauthorized")
-		return uuid.UUID{}, err
+		httphelpers.WriteError(w, http.StatusUnauthorized, "unauthorized: user_id not found in claims")
+		return uuid.UUID{}, fmt.Errorf("user_id not found in claims")
 	}
 
 	userUUID, err := uuid.Parse(userID)
 	if err != nil {
-		httphelpers.WriteError(w, http.StatusUnauthorized, "unauthorized")
+		httphelpers.WriteError(w, http.StatusUnauthorized, fmt.Sprintf("unauthorized: %v", err))
 		return uuid.UUID{}, err
 	}
 

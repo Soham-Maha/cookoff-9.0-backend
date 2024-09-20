@@ -3,13 +3,12 @@ package submission
 import (
 	"context"
 	"encoding/json"
-	"errors"
+	"fmt"
 	"net/http"
 	"os"
 
 	"github.com/CodeChefVIT/cookoff-backend/internal/db"
 	"github.com/CodeChefVIT/cookoff-backend/internal/helpers/database"
-	logger "github.com/CodeChefVIT/cookoff-backend/internal/helpers/logging"
 	"github.com/google/uuid"
 )
 
@@ -26,8 +25,7 @@ func CreateSubmission(ctx context.Context, question_id uuid.UUID, language_id in
 
 	testcases, err := database.Queries.GetTestCases(ctx, db.GetTestCasesParams{QuestionID: question_id, Column2: false})
 	if err != nil {
-		logger.Errof("Error getting test cases for question_id %d: %v", question_id, err)
-		return nil, err
+		return nil, fmt.Errorf("error getting test cases for question_id %d: %v", question_id, err)
 	}
 	payload := Payload{
 		Submissions: make([]Submission, len(testcases)),
@@ -51,8 +49,7 @@ func CreateSubmission(ctx context.Context, question_id uuid.UUID, language_id in
 	}
 	payloadJSON, err := json.Marshal(payload)
 	if err != nil {
-		logger.Errof("Error marshaling payload: %v", err)
-		return nil, err
+		return nil, fmt.Errorf("error marshaling payload: %v", err)
 	}
 
 	return payloadJSON, nil
@@ -62,13 +59,13 @@ func StoreTokens(ctx context.Context, subID uuid.UUID, r *http.Response) error {
 	var tokens []Token
 	err := json.NewDecoder(r.Body).Decode(&tokens)
 	if err != nil {
-		return errors.New("Invalid request payload")
+		return fmt.Errorf("Invalid request payload")
 	}
 
 	for _, t := range tokens {
 		err := Tokens.AddToken(ctx, t.Token, subID.String())
 		if err != nil {
-			return errors.New("Failed to add token")
+			return fmt.Errorf("Failed to add token")
 		}
 	}
 	return nil
