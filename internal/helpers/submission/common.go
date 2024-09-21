@@ -1,10 +1,16 @@
 package submission
 
 import (
+	"bytes"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"net/http"
+	"net/url"
+	"os"
 )
+
+var bearer = os.Getenv("JUDGE0_TOKEN")
 
 type Submission struct {
 	LanguageID int     `json:"language_id"`
@@ -59,4 +65,23 @@ func RuntimeMut(language_id int) (int, error) {
 		return 0, fmt.Errorf("invalid language ID: %d", language_id)
 	}
 	return runtime_mut, nil
+}
+
+func Judge0(judge0Url *url.URL, params url.Values, payload []byte) (*http.Response, error) {
+	judge0Url.RawQuery = params.Encode()
+	judgereq, err := http.NewRequest("POST", judge0Url.String(), bytes.NewReader(payload))
+	if err != nil {
+		return nil, fmt.Errorf("error creating request to Judge0: %v", err)
+	}
+
+	judgereq.Header.Add("Content-Type", "application/json")
+	judgereq.Header.Add("Accept", "application/json")
+	judgereq.Header.Add("Authorization", fmt.Sprintf("Bearer %v", bearer))
+
+	resp, err := http.DefaultClient.Do(judgereq)
+	if err != nil {
+		return nil, fmt.Errorf("error sending request to Judge0: %v", err)
+	}
+
+	return resp, nil
 }
