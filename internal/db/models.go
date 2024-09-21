@@ -41,7 +41,7 @@ type Testcase struct {
 	Memory         *string
 	Input          *string
 	Hidden         pgtype.Bool
-	Runtime        pgtype.Time
+	Runtime        pgtype.Numeric
 	QuestionID     uuid.UUID
 }
 
