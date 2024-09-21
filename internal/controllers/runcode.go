@@ -84,7 +84,7 @@ func RunCode(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		result, err := submission.Judge0(judge0URL, params, payloadJSON)
+		result, err := submission.SendToJudge0(judge0URL, params, payloadJSON)
 		if err != nil {
 			logger.Errof("Error sending request to Judge0: %v", err)
 			httphelpers.WriteError(w, http.StatusInternalServerError, fmt.Sprintf("Error sending request to Judge0: %v", err))

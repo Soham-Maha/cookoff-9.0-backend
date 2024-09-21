@@ -67,7 +67,7 @@ func RuntimeMut(language_id int) (int, error) {
 	return runtime_mut, nil
 }
 
-func Judge0(judge0Url *url.URL, params url.Values, payload []byte) (*http.Response, error) {
+func SendToJudge0(judge0Url *url.URL, params url.Values, payload []byte) (*http.Response, error) {
 	judge0Url.RawQuery = params.Encode()
 	judgereq, err := http.NewRequest("POST", judge0Url.String(), bytes.NewReader(payload))
 	if err != nil {
