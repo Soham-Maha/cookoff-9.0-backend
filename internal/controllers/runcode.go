@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -49,7 +48,7 @@ func RunCode(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	judge0URL, err := url.Parse(JUDGE0_URI + "/submissions/")
+	judge0URL, err := url.Parse(JUDGE0_URI + "/submissions")
 	if err != nil {
 		httphelpers.WriteError(w, http.StatusInternalServerError, fmt.Sprintf("Error parsing Judge0 URL: %v", err))
 		return
@@ -57,7 +56,6 @@ func RunCode(w http.ResponseWriter, r *http.Request) {
 	params := url.Values{}
 	params.Add("base64_encoded", "true")
 	params.Add("wait", "true")
-	judge0URL.RawQuery = params.Encode()
 
 	var payload submission.Submission
 	response := resp{
@@ -86,7 +84,7 @@ func RunCode(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		result, err := http.Post(judge0URL.String(), "application/json", bytes.NewBuffer(payloadJSON))
+		result, err := submission.SendToJudge0(judge0URL, params, payloadJSON)
 		if err != nil {
 			logger.Errof("Error sending request to Judge0: %v", err)
 			httphelpers.WriteError(w, http.StatusInternalServerError, fmt.Sprintf("Error sending request to Judge0: %v", err))
