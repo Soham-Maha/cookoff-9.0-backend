@@ -48,7 +48,7 @@ func RunCode(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	judge0URL, err := url.Parse(JUDGE0_URI + "/submissions/")
+	judge0URL, err := url.Parse(JUDGE0_URI + "/submissions")
 	if err != nil {
 		httphelpers.WriteError(w, http.StatusInternalServerError, fmt.Sprintf("Error parsing Judge0 URL: %v", err))
 		return
