@@ -12,6 +12,7 @@ import (
 	httphelpers "github.com/CodeChefVIT/cookoff-backend/internal/helpers/http"
 	logger "github.com/CodeChefVIT/cookoff-backend/internal/helpers/logging"
 	"github.com/CodeChefVIT/cookoff-backend/internal/helpers/submission"
+	"github.com/CodeChefVIT/cookoff-backend/internal/helpers/validator"
 	"github.com/google/uuid"
 )
 
@@ -26,6 +27,11 @@ func RunCode(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
 		httphelpers.WriteError(w, http.StatusBadRequest, "Invalid request payload")
+		return
+	}
+
+	if err := validator.ValidatePayload(w, req); err != nil {
+		httphelpers.WriteError(w, http.StatusNotAcceptable, "Please provide values for all required fields.")
 		return
 	}
 
