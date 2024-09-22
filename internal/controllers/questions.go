@@ -8,6 +8,7 @@ import (
 	"github.com/CodeChefVIT/cookoff-backend/internal/helpers/auth"
 	"github.com/CodeChefVIT/cookoff-backend/internal/helpers/database"
 	httphelpers "github.com/CodeChefVIT/cookoff-backend/internal/helpers/http"
+	"github.com/CodeChefVIT/cookoff-backend/internal/helpers/validator"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -16,6 +17,17 @@ import (
 
 type Question struct {
 	ID           uuid.UUID   `json:"id"`
+	Description  *string     `json:"description"`
+	Title        *string     `json:"title"`
+	InputFormat  *string     `json:"input_format"`
+	Points       pgtype.Int4 `json:"points"`
+	Round        int32       `json:"round"`
+	Constraints  *string     `json:"constraints"`
+	OutputFormat *string     `json:"output_format"`
+}
+
+type QuestionRequest struct {
+	ID           uuid.UUID   `json:"id" validate:"required"`
 	Description  *string     `json:"description"`
 	Title        *string     `json:"title"`
 	InputFormat  *string     `json:"input_format"`
@@ -79,6 +91,11 @@ func CreateQuestion(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if err := validator.ValidatePayload(w, question); err != nil {
+		httphelpers.WriteError(w, http.StatusNotAcceptable, "Please provide values for all required fields.")
+		return
+	}
+
 	questions, err := database.Queries.CreateQuestion(ctx, db.CreateQuestionParams{
 		ID:           uuid.New(),
 		Description:  question.Description,
@@ -116,9 +133,14 @@ func DeleteQuestion(w http.ResponseWriter, r *http.Request) {
 
 func UpdateQuestion(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	var updateQuestion Question
+	var updateQuestion QuestionRequest
 	if err := httphelpers.ParseJSON(r, &updateQuestion); err != nil {
 		httphelpers.WriteError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	if err := validator.ValidatePayload(w, updateQuestion); err != nil {
+		httphelpers.WriteError(w, http.StatusNotAcceptable, "Please provide values for all required fields.")
 		return
 	}
 

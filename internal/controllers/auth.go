@@ -11,21 +11,22 @@ import (
 	"github.com/CodeChefVIT/cookoff-backend/internal/helpers/database"
 	httphelpers "github.com/CodeChefVIT/cookoff-backend/internal/helpers/http"
 	logger "github.com/CodeChefVIT/cookoff-backend/internal/helpers/logging"
+	"github.com/CodeChefVIT/cookoff-backend/internal/helpers/validator"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 	"golang.org/x/crypto/bcrypt"
 )
 
 type LoginRequest struct {
-	Email    string `json:"email"`
-	Password string `json:"password"`
+	Email    string `json:"email" validate:"required"`
+	Password string `json:"password" validate:"required"`
 }
 
 type SignupRequest struct {
-	Email string `json:"email"`
-	Name  string `json:"name"`
-	RegNo string `json:"reg_no"`
-	Key   string `json:"fuck_you"`
+	Email string `json:"email" validate:"required"`
+	Name  string `json:"name" validate:"required"`
+	RegNo string `json:"reg_no" validate:"required"`
+	Key   string `json:"fuck_you" validate:"required"`
 }
 
 func SignUp(w http.ResponseWriter, r *http.Request) {
@@ -33,6 +34,11 @@ func SignUp(w http.ResponseWriter, r *http.Request) {
 
 	if err := httphelpers.ParseJSON(r, &payload); err != nil {
 		httphelpers.WriteError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	if err := validator.ValidatePayload(w, payload); err != nil {
+		httphelpers.WriteError(w, http.StatusNotAcceptable, "Please provide values for all required fields.")
 		return
 	}
 
