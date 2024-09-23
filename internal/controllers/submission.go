@@ -3,6 +3,7 @@ package controllers
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 	"os"
@@ -89,7 +90,19 @@ func SubmitCode(w http.ResponseWriter, r *http.Request) {
 	}
 	defer resp.Body.Close()
 
-	err = submission.StoreTokens(ctx, subID, resp)
+	if resp.StatusCode != http.StatusCreated {
+		logger.Errof("Unexpected status code from Judge0: %d", resp.StatusCode)
+		httphelpers.WriteError(w, http.StatusInternalServerError, fmt.Sprintf("Unexpected status code from Judge0: %d", resp.StatusCode))
+		return
+	}
+
+	respBytes, err := io.ReadAll(resp.Body)
+	if err != nil {
+		logger.Errof("Error reading response body from Judge0: %v", err)
+		httphelpers.WriteError(w, http.StatusInternalServerError, fmt.Sprintf("Error reading response body from Judge0: %v", err))
+		return
+	}
+	err = submission.StoreTokens(ctx, subID, respBytes)
 	if err != nil {
 		logger.Errof("Error storing tokens for submission ID %s: %v", subID, err)
 		httphelpers.WriteError(w, http.StatusInternalServerError, fmt.Sprintf("Error storing tokens for submission ID %s: %v", subID, err))
