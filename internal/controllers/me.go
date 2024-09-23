@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/CodeChefVIT/cookoff-backend/internal/db"
@@ -35,8 +36,8 @@ func MeHandler(w http.ResponseWriter, r *http.Request) {
 	var submissionsByRound = make(map[string][]db.GetSubmissionsWithRoundByUserIdRow)
 
 	for _, submission := range submissions {
-		round := submission.Round
-		submissionsByRound[string(round)] = append(submissionsByRound[string(round)], db.GetSubmissionsWithRoundByUserIdRow(submission))
+		round := fmt.Sprint(submission.Round)
+		submissionsByRound[round] = append(submissionsByRound[round], db.GetSubmissionsWithRoundByUserIdRow(submission))
 	}
 
 	data := map[string]any{
