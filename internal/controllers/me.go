@@ -31,6 +31,6 @@ func MeHandler(w http.ResponseWriter, r *http.Request) {
 
 	httphelpers.WriteJSON(w, http.StatusOK, map[string]any{
 		"message": "User details fetched successfully",
-		"user":    data,
+		"data":    data,
 	})
 }
