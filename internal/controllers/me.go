@@ -10,7 +10,11 @@ import (
 )
 
 func MeHandler(w http.ResponseWriter, r *http.Request) {
-	id, _ := helpers.GetUserID(w, r)
+	id, err := helpers.GetUserID(w, r)
+	if err != nil {
+		httphelpers.WriteError(w, http.StatusUnauthorized, err.Error())
+		return
+	}
 
 	user, err := database.Queries.GetUserById(r.Context(), id)
 	if err != nil {
