@@ -37,10 +37,10 @@ type Submission struct {
 
 type Testcase struct {
 	ID             uuid.UUID
-	ExpectedOutput *string
-	Memory         *string
-	Input          *string
-	Hidden         pgtype.Bool
+	ExpectedOutput string
+	Memory         string
+	Input          string
+	Hidden         bool
 	Runtime        pgtype.Numeric
 	QuestionID     uuid.UUID
 }

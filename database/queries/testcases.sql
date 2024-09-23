@@ -53,5 +53,4 @@ SELECT
     question_id, 
     runtime
 FROM testcases
-WHERE question_id = $1
-  AND (CASE WHEN $2 = TRUE THEN hidden = FALSE ELSE TRUE END);
+WHERE question_id = $1;

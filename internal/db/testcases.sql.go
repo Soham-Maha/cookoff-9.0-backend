@@ -28,10 +28,10 @@ INSERT INTO testcases (
 
 type CreateTestCaseParams struct {
 	ID             uuid.UUID
-	ExpectedOutput *string
-	Memory         *string
-	Input          *string
-	Hidden         pgtype.Bool
+	ExpectedOutput string
+	Memory         string
+	Input          string
+	Hidden         bool
 	QuestionID     uuid.UUID
 	Runtime        pgtype.Numeric
 }
@@ -109,10 +109,10 @@ WHERE id = $1
 
 type GetTestCaseRow struct {
 	ID             uuid.UUID
-	ExpectedOutput *string
-	Memory         *string
-	Input          *string
-	Hidden         pgtype.Bool
+	ExpectedOutput string
+	Memory         string
+	Input          string
+	Hidden         bool
 	QuestionID     uuid.UUID
 	Runtime        pgtype.Numeric
 }
@@ -143,26 +143,20 @@ SELECT
     runtime
 FROM testcases
 WHERE question_id = $1
-  AND (CASE WHEN $2 = TRUE THEN hidden = FALSE ELSE TRUE END)
 `
-
-type GetTestCasesByQuestionParams struct {
-	QuestionID uuid.UUID
-	Column2    interface{}
-}
 
 type GetTestCasesByQuestionRow struct {
 	ID             uuid.UUID
-	ExpectedOutput *string
-	Memory         *string
-	Input          *string
-	Hidden         pgtype.Bool
+	ExpectedOutput string
+	Memory         string
+	Input          string
+	Hidden         bool
 	QuestionID     uuid.UUID
 	Runtime        pgtype.Numeric
 }
 
-func (q *Queries) GetTestCasesByQuestion(ctx context.Context, arg GetTestCasesByQuestionParams) ([]GetTestCasesByQuestionRow, error) {
-	rows, err := q.db.Query(ctx, getTestCasesByQuestion, arg.QuestionID, arg.Column2)
+func (q *Queries) GetTestCasesByQuestion(ctx context.Context, questionID uuid.UUID) ([]GetTestCasesByQuestionRow, error) {
+	rows, err := q.db.Query(ctx, getTestCasesByQuestion, questionID)
 	if err != nil {
 		return nil, err
 	}
@@ -201,10 +195,10 @@ WHERE id = $6
 `
 
 type UpdateTestCaseParams struct {
-	ExpectedOutput *string
-	Memory         *string
-	Input          *string
-	Hidden         pgtype.Bool
+	ExpectedOutput string
+	Memory         string
+	Input          string
+	Hidden         bool
 	Runtime        pgtype.Numeric
 	ID             uuid.UUID
 }
