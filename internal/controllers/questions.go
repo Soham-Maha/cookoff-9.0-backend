@@ -8,6 +8,7 @@ import (
 	"github.com/CodeChefVIT/cookoff-backend/internal/helpers/auth"
 	"github.com/CodeChefVIT/cookoff-backend/internal/helpers/database"
 	httphelpers "github.com/CodeChefVIT/cookoff-backend/internal/helpers/http"
+	"github.com/CodeChefVIT/cookoff-backend/internal/helpers/validator"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -16,6 +17,17 @@ import (
 
 type Question struct {
 	ID           uuid.UUID   `json:"id"`
+	Description  *string     `json:"description"`
+	Title        *string     `json:"title"`
+	InputFormat  *string     `json:"input_format"`
+	Points       pgtype.Int4 `json:"points"`
+	Round        int32       `json:"round"`
+	Constraints  *string     `json:"constraints"`
+	OutputFormat *string     `json:"output_format"`
+}
+
+type QuestionRequest struct {
+	ID           uuid.UUID   `json:"id" validate:"required"`
 	Description  *string     `json:"description"`
 	Title        *string     `json:"title"`
 	InputFormat  *string     `json:"input_format"`
@@ -40,7 +52,7 @@ func GetQuestionById(w http.ResponseWriter, r *http.Request) {
 	idStr := chi.URLParam(r, "question_id")
 	id, err := uuid.Parse(idStr)
 	if err != nil {
-    httphelpers.WriteError(w, http.StatusBadRequest, err.Error())
+		httphelpers.WriteError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
@@ -59,7 +71,7 @@ func GetQuestionsByRound(w http.ResponseWriter, r *http.Request) {
 
 	user, err := database.Queries.GetUserById(ctx, id)
 	if err != nil {
-    httphelpers.WriteError(w, http.StatusInternalServerError, err.Error())
+		httphelpers.WriteError(w, http.StatusInternalServerError, err.Error())
 	}
 
 	questions, err := database.Queries.GetQuestionByRound(ctx, user.RoundQualified)
@@ -76,6 +88,11 @@ func CreateQuestion(w http.ResponseWriter, r *http.Request) {
 	err := httphelpers.ParseJSON(r, &question)
 	if err != nil {
 		httphelpers.WriteError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	if err := validator.ValidatePayload(w, question); err != nil {
+		httphelpers.WriteError(w, http.StatusNotAcceptable, "Please provide values for all required fields.")
 		return
 	}
 
@@ -111,16 +128,19 @@ func DeleteQuestion(w http.ResponseWriter, r *http.Request) {
 		httphelpers.WriteError(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	httphelpers.WriteJSON(w, 200, map[string]string{"message":"Question successfully deleted"} )
+	httphelpers.WriteJSON(w, 200, map[string]string{"message": "Question successfully deleted"})
 }
 
 func UpdateQuestion(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	var updateQuestion Question
-	var params db.UpdateQuestionParams
-
+	var updateQuestion QuestionRequest
 	if err := httphelpers.ParseJSON(r, &updateQuestion); err != nil {
-		httphelpers.WriteError(w, http.StatusBadRequest, err.Error())
+		httphelpers.WriteError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	if err := validator.ValidatePayload(w, updateQuestion); err != nil {
+		httphelpers.WriteError(w, http.StatusNotAcceptable, "Please provide values for all required fields.")
 		return
 	}
 
@@ -128,10 +148,9 @@ func UpdateQuestion(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		if err == pgx.ErrNoRows {
 			httphelpers.WriteError(w, http.StatusNotFound, err.Error())
-			return
+		} else {
+			httphelpers.WriteError(w, http.StatusInternalServerError, err.Error())
 		}
-		httphelpers.WriteError(w, http.StatusInternalServerError, err.Error())
-		return
 	}
 	nulVal := pgtype.Int4{
 		Int32: 0,
@@ -139,28 +158,37 @@ func UpdateQuestion(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if updateQuestion.Description != nil {
-		params.Description = updateQuestion.Description
+		question.Description = updateQuestion.Description
 	}
 	if updateQuestion.Title != nil {
-		params.Title = updateQuestion.Title
+		question.Title = updateQuestion.Title
 	}
 	if updateQuestion.InputFormat != nil {
-		params.InputFormat = updateQuestion.InputFormat
+		question.InputFormat = updateQuestion.InputFormat
 	}
 	if updateQuestion.Points != nulVal {
-		params.Points = updateQuestion.Points
+		question.Points = updateQuestion.Points
 	}
 	if updateQuestion.Round != 0 {
-		params.Round = updateQuestion.Round
+		question.Round = updateQuestion.Round
 	}
 	if updateQuestion.Constraints != nil {
-		params.Constraints = updateQuestion.Constraints
+		question.Constraints = updateQuestion.Constraints
 	}
 	if updateQuestion.OutputFormat != nil {
-		params.OutputFormat = updateQuestion.OutputFormat
+		question.OutputFormat = updateQuestion.OutputFormat
 	}
 
-	err = database.Queries.UpdateQuestion(ctx, params)
+	err = database.Queries.UpdateQuestion(ctx, db.UpdateQuestionParams{
+		Description:  question.Description,
+		Title:        question.Title,
+		InputFormat:  question.InputFormat,
+		Points:       question.Points,
+		Round:        question.Round,
+		Constraints:  question.Constraints,
+		OutputFormat: question.OutputFormat,
+		ID:           updateQuestion.ID,
+	})
 	if err != nil {
 		httphelpers.WriteError(w, http.StatusInternalServerError, err.Error())
 	}

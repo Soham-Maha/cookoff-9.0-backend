@@ -20,7 +20,9 @@ func (s *Server) RegisterRoutes(taskClient *asynq.Client) http.Handler {
 	r.Put("/callback", func(w http.ResponseWriter, r *http.Request) {
 		controllers.CallbackUrl(w, r, taskClient)
 	})
-	
+
+	r.Post("/user/signup", controllers.SignUp)
+
 	r.Post("/login/user", controllers.LoginHandler)
 	r.Post("/token/refresh", controllers.RefreshTokenHandler)
 	r.Group(func(protected chi.Router) {
@@ -31,7 +33,8 @@ func (s *Server) RegisterRoutes(taskClient *asynq.Client) http.Handler {
 		protected.With(middlewares.RoleAuthorizationMiddleware("admin")).Post("/round/{round_number}/disable", controllers.DisableRound)
 		protected.Use(jwtauth.Verifier(auth.TokenAuth))
 		protected.Use(jwtauth.Authenticator(auth.TokenAuth))
-		protected.With(middlewares.RoleAuthorizationMiddleware("admin")).Get("/users", controllers.GetAllUsers)
+
+		protected.Get("/me", controllers.MeHandler)
 		protected.Get("/protected", controllers.ProtectedHandler)
 		protected.With(middlewares.BanCheckMiddleware).Post("/submit", controllers.SubmitCode)
         protected.With(middlewares.BanCheckMiddleware).Post("/runcode", controllers.RunCode)

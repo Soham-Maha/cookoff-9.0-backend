@@ -8,6 +8,7 @@ import (
 	logger "github.com/CodeChefVIT/cookoff-backend/internal/helpers/logging"
 	"github.com/CodeChefVIT/cookoff-backend/internal/helpers/queue"
 	"github.com/CodeChefVIT/cookoff-backend/internal/helpers/submission"
+	"github.com/CodeChefVIT/cookoff-backend/internal/helpers/validator"
 	"github.com/CodeChefVIT/cookoff-backend/internal/server"
 	"github.com/CodeChefVIT/cookoff-backend/internal/worker"
 	"github.com/hibiken/asynq"
@@ -20,6 +21,7 @@ func main() {
 	database.InitCache()
 	auth.InitJWT()
 	submission.Init(database.RedisClient)
+	validator.InitValidator()
 
 	taskServer, taskClient := queue.InitQueue("redis:6379", 2)
 

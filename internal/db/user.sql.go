@@ -9,7 +9,50 @@ import (
 	"context"
     "github.com/lib/pq"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 )
+
+const createUser = `-- name: CreateUser :one
+INSERT INTO users (id, email, reg_no, password, role, round_qualified, score, name)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+RETURNING id, email, reg_no, password, role, round_qualified, score, name
+`
+
+type CreateUserParams struct {
+	ID             uuid.UUID
+	Email          string
+	RegNo          string
+	Password       string
+	Role           string
+	RoundQualified int32
+	Score          pgtype.Int4
+	Name           string
+}
+
+func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
+	row := q.db.QueryRow(ctx, createUser,
+		arg.ID,
+		arg.Email,
+		arg.RegNo,
+		arg.Password,
+		arg.Role,
+		arg.RoundQualified,
+		arg.Score,
+		arg.Name,
+	)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Email,
+		&i.RegNo,
+		&i.Password,
+		&i.Role,
+		&i.RoundQualified,
+		&i.Score,
+		&i.Name,
+	)
+	return i, err
+}
 
 const getUserByEmail = `-- name: GetUserByEmail :one
 SELECT id, email, reg_no, password, role, round_qualified, score, name

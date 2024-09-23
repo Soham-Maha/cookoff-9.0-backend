@@ -1,8 +1,8 @@
 package controllers
 
 import (
-	"bytes"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/url"
 	"os"
@@ -13,13 +13,14 @@ import (
 	httphelpers "github.com/CodeChefVIT/cookoff-backend/internal/helpers/http"
 	logger "github.com/CodeChefVIT/cookoff-backend/internal/helpers/logging"
 	"github.com/CodeChefVIT/cookoff-backend/internal/helpers/submission"
+	"github.com/CodeChefVIT/cookoff-backend/internal/helpers/validator"
 	"github.com/google/uuid"
 )
 
 type subreq struct {
-	SourceCode string `json:"source_code"`
-	LanguageID int    `json:"language_id"`
-	QuestionID string `json:"question_id"`
+	SourceCode string `json:"source_code" validate:"required"`
+	LanguageID int    `json:"language_id" validate:"required"`
+	QuestionID string `json:"question_id" validate:"required"`
 }
 
 var JUDGE0_URI = os.Getenv("JUDGE0_URI")
@@ -34,47 +35,21 @@ func SubmitCode(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	question_id, _ := uuid.Parse(req.QuestionID)
-
-	payload, err := submission.CreateSubmission(ctx, question_id, req.LanguageID, req.SourceCode)
-	if err != nil {
-		logger.Errof("Error creating submission: %v", err)
-		httphelpers.WriteError(w, http.StatusInternalServerError, "Failed to create submission")
-		return
-	}
-
-	subID, err := uuid.NewV7()
-	if err != nil {
-		logger.Errof("Error in generating uuid for submission: %v", err)
-		httphelpers.WriteError(w, http.StatusInternalServerError, "Error in generating uuid for submission")
-		return
-	}
-
-	judge0URL, _ := url.Parse(JUDGE0_URI + "/submissions/batch")
-
-	params := url.Values{}
-	params.Add("base64_encoded", "true")
-	judge0URL.RawQuery = params.Encode()
-	resp, err := http.Post(judge0URL.String(), "application/json", bytes.NewBuffer(payload))
-	if err != nil {
-		logger.Errof("Error sending request to Judge0: %v", err)
-		httphelpers.WriteError(w, http.StatusInternalServerError, "Failed to send request to Judge0")
-		return
-	}
-	defer resp.Body.Close()
-
-	err = submission.StoreTokens(ctx, subID, resp)
-	if err != nil {
-		logger.Errof("Error storing tokens for submission ID %s: %v", subID, err)
-		httphelpers.WriteError(w, http.StatusInternalServerError, "Error storing tokens for the submission")
+	if err := validator.ValidatePayload(w, req); err != nil {
+		httphelpers.WriteError(w, http.StatusNotAcceptable, "Please provide values for all required fields.")
 		return
 	}
 
 	userID, _ := auth.GetUserID(w, r)
-	qID, _ := uuid.Parse(req.QuestionID)
 	nullUserID := uuid.NullUUID{UUID: userID, Valid: true}
 
-	qualified, err := auth.VerifyRound(ctx, userID, qID)
+	question_id, err := uuid.Parse(req.QuestionID)
+	if err != nil {
+		httphelpers.WriteError(w, http.StatusBadRequest, "Invalid question id, unable to parse it to uuid")
+		return
+	}
+
+	qualified, err := auth.VerifyRound(ctx, userID, question_id)
 	if err != nil {
 		httphelpers.WriteError(w, http.StatusNotFound, err.Error())
 		return
@@ -84,15 +59,52 @@ func SubmitCode(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	payload, err := submission.CreateSubmission(ctx, question_id, req.LanguageID, req.SourceCode)
+	if err != nil {
+		httphelpers.WriteError(w, http.StatusInternalServerError, fmt.Sprintf("Failed to create submission payload: %v", err))
+		return
+	}
+
+	subID, err := uuid.NewV7()
+	if err != nil {
+		logger.Errof("Error in generating uuid for submission: %v", err)
+		httphelpers.WriteError(w, http.StatusInternalServerError, fmt.Sprintf("Error in generating uuid for submission: %v", err))
+		return
+	}
+
+	judge0URL, err := url.Parse(JUDGE0_URI + "/submissions/batch")
+	if err != nil {
+		httphelpers.WriteError(w, http.StatusInternalServerError, fmt.Sprintf("Error parsing Judge0 URL: %v", err))
+		return
+	}
+
+	params := url.Values{}
+	params.Add("base64_encoded", "true")
+
+	resp, err := submission.SendToJudge0(judge0URL, params, payload)
+	if err != nil {
+		logger.Errof("Error sending request to Judge0: %v", err)
+		httphelpers.WriteError(w, http.StatusInternalServerError, fmt.Sprintf("Error sending request to Judge0: %v", err))
+		return
+	}
+	defer resp.Body.Close()
+
+	err = submission.StoreTokens(ctx, subID, resp)
+	if err != nil {
+		logger.Errof("Error storing tokens for submission ID %s: %v", subID, err)
+		httphelpers.WriteError(w, http.StatusInternalServerError, fmt.Sprintf("Error storing tokens for submission ID %s: %v", subID, err))
+		return
+	}
+
 	err = database.Queries.CreateSubmission(ctx, db.CreateSubmissionParams{
 		ID:         subID,
 		UserID:     nullUserID,
-		QuestionID: qID,
+		QuestionID: question_id,
 		LanguageID: int32(req.LanguageID),
 	})
 	if err != nil {
 		logger.Errof("Error creating submission in database: %v", err)
-		httphelpers.WriteError(w, http.StatusInternalServerError, "Error creating submission in database")
+		httphelpers.WriteError(w, http.StatusInternalServerError, fmt.Sprintf("Error creating submission in database: %v", err))
 		return
 	}
 
@@ -103,5 +115,8 @@ func SubmitCode(w http.ResponseWriter, r *http.Request) {
 		SubmissionID: subID.String(),
 	}
 	w.Header().Set("Content-Type", "application/json")
-	_ = json.NewEncoder(w).Encode(respData)
+	if err := json.NewEncoder(w).Encode(respData); err != nil {
+		httphelpers.WriteError(w, http.StatusInternalServerError, fmt.Sprintf("Error encoding response: %v", err))
+		return
+	}
 }
