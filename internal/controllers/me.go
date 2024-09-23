@@ -32,10 +32,11 @@ func MeHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var submissionsByRound []db.GetSubmissionsWithRoundByUserIdRow
+	var submissionsByRound = make(map[string][]db.GetSubmissionsWithRoundByUserIdRow)
 
 	for _, submission := range submissions {
-		submissionsByRound = append(submissionsByRound, db.GetSubmissionsWithRoundByUserIdRow(submission))
+		round := submission.Round
+		submissionsByRound[string(round)] = append(submissionsByRound[string(round)], db.GetSubmissionsWithRoundByUserIdRow(submission))
 	}
 
 	data := map[string]any{
