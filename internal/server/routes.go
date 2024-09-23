@@ -29,6 +29,7 @@ func (s *Server) RegisterRoutes(taskClient *asynq.Client) http.Handler {
 		protected.Use(jwtauth.Verifier(auth.TokenAuth))
 		protected.Use(jwtauth.Authenticator(auth.TokenAuth))
 
+		protected.Get("/me", controllers.MeHandler)
 		protected.Get("/protected", controllers.ProtectedHandler)
 		protected.Post("/submit", controllers.SubmitCode)
 		protected.Post("/runcode", controllers.RunCode)

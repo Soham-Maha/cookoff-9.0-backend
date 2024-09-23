@@ -38,7 +38,7 @@ func SignUp(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := validator.ValidatePayload(w, payload); err != nil {
-		httphelpers.WriteError(w, http.StatusNotAcceptable, "Please provide values for all required fields.")
+		httphelpers.WriteError(w, http.StatusNotAcceptable, "invalid input")
 		return
 	}
 
