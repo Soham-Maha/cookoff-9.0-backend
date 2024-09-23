@@ -22,8 +22,10 @@ type Submission struct {
 }
 
 type Judgeresp struct {
-	TestCaseID     string
+	TestCaseID     string `json:"testcase_id"`
 	StdOut         string `json:"stdout"`
+	ExpectedOutput string `json:"expected_output"`
+	Input          string `json:"input"`
 	Time           string `json:"time"`
 	Memory         int    `json:"memory"`
 	StdErr         string `json:"stderr"`
