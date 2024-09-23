@@ -92,7 +92,7 @@ func SubmitCode(w http.ResponseWriter, r *http.Request) {
 
 	if resp.StatusCode != http.StatusCreated {
 		logger.Errof("Unexpected status code from Judge0: %d", resp.StatusCode)
-		httphelpers.WriteError(w, http.StatusInternalServerError, fmt.Sprintf("Unexpected status code from Judge0: %d", resp.StatusCode))
+		httphelpers.WriteError(w, http.StatusInternalServerError, "Internal server error!")
 		return
 	}
 
