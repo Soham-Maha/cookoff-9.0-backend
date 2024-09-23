@@ -56,6 +56,45 @@ func (q *Queries) GetSubmission(ctx context.Context, id uuid.UUID) (GetSubmissio
 	return i, err
 }
 
+const getSubmissionsByUserId = `-- name: GetSubmissionsByUserId :many
+SELECT id, question_id, testcases_passed, testcases_failed, runtime, submission_time, testcase_id, language_id, description, memory, user_id, status
+FROM submissions
+WHERE user_id = $1
+`
+
+func (q *Queries) GetSubmissionsByUserId(ctx context.Context, userID uuid.NullUUID) ([]Submission, error) {
+	rows, err := q.db.Query(ctx, getSubmissionsByUserId, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Submission
+	for rows.Next() {
+		var i Submission
+		if err := rows.Scan(
+			&i.ID,
+			&i.QuestionID,
+			&i.TestcasesPassed,
+			&i.TestcasesFailed,
+			&i.Runtime,
+			&i.SubmissionTime,
+			&i.TestcaseID,
+			&i.LanguageID,
+			&i.Description,
+			&i.Memory,
+			&i.UserID,
+			&i.Status,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getTestCases = `-- name: GetTestCases :many
 SELECT id, expected_output, memory, input, hidden, runtime, question_id 
 FROM testcases

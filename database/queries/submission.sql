@@ -21,3 +21,8 @@ FROM
     submissions 
 WHERE 
     id = $1;
+
+-- name: GetSubmissionsByUserId :many
+SELECT *
+FROM submissions
+WHERE user_id = $1;

@@ -7,6 +7,7 @@ import (
 	"github.com/CodeChefVIT/cookoff-backend/internal/helpers/database"
 	httphelpers "github.com/CodeChefVIT/cookoff-backend/internal/helpers/http"
 	logger "github.com/CodeChefVIT/cookoff-backend/internal/helpers/logging"
+	"github.com/google/uuid"
 )
 
 func MeHandler(w http.ResponseWriter, r *http.Request) {
@@ -23,10 +24,18 @@ func MeHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	submissions, err := database.Queries.GetSubmissionsByUserId(r.Context(), uuid.NullUUID{UUID: id})
+	if err != nil {
+		logger.Errof("Failed to get submissions: %v", err)
+		httphelpers.WriteError(w, http.StatusInternalServerError, "Failed to get submissions")
+		return
+	}
+
 	data := map[string]any{
-		"username": user.Name,
-		"round":    user.RoundQualified,
-		"score":    user.Score,
+		"username":    user.Name,
+		"round":       user.RoundQualified,
+		"score":       user.Score,
+		"submissions": submissions,
 	}
 
 	httphelpers.WriteJSON(w, http.StatusOK, map[string]any{
