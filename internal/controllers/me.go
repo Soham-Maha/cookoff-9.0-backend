@@ -42,7 +42,7 @@ func MeHandler(w http.ResponseWriter, r *http.Request) {
 	data := map[string]any{
 		"username":    user.Name,
 		"round":       user.RoundQualified,
-		"score":       user.Score,
+		"score":       user.Score.Int32,
 		"submissions": submissionsByRound,
 	}
 
@@ -50,5 +50,4 @@ func MeHandler(w http.ResponseWriter, r *http.Request) {
 		"message": "User details fetched successfully",
 		"data":    data,
 	})
-
 }
