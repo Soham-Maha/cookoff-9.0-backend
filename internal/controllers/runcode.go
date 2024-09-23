@@ -17,7 +17,8 @@ import (
 )
 
 type resp struct {
-	Result []submission.Judgeresp `json:"result"`
+	TestCasesPassed int                    `json:"no_testcases_passed"`
+	Result          []submission.Judgeresp `json:"result"`
 }
 
 func RunCode(w http.ResponseWriter, r *http.Request) {
@@ -99,15 +100,24 @@ func RunCode(w http.ResponseWriter, r *http.Request) {
 		defer result.Body.Close()
 
 		var data submission.Judgeresp
-		data.TestCaseID = testcase.ID.String()
 		if err = json.NewDecoder(result.Body).Decode(&data); err != nil {
 			logger.Errof("Error decoding response from Judge0: %v", err)
 			httphelpers.WriteError(w, http.StatusInternalServerError, fmt.Sprintf("Error decoding response from Judge0: %v", err))
 			return
 		}
 
+		data.StdOut, _ = submission.DecodeB64(data.StdOut)
 		data.CompilerOutput, _ = submission.DecodeB64(data.CompilerOutput)
+		data.ExpectedOutput = string(*testcase.ExpectedOutput)
+		data.Message, _ = submission.DecodeB64(data.Message)
+		data.StdErr, _ = submission.DecodeB64(data.StdErr)
+		data.TestCaseID = testcase.ID.String()
+		data.Input = string(*testcase.Input)
 		response.Result[i] = data
+		status, _ := data.Status.ID.Int64()
+		if status == 3 {
+			response.TestCasesPassed += 1
+		}
 	}
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(response); err != nil {
