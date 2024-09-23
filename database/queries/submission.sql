@@ -22,7 +22,8 @@ FROM
 WHERE 
     id = $1;
 
--- name: GetSubmissionsByUserId :many
-SELECT *
-FROM submissions
-WHERE user_id = $1;
+-- name: GetSubmissionsWithRoundByUserId :many
+SELECT q.round, s.*
+FROM submissions s
+INNER JOIN questions q ON s.question_id = q.id
+WHERE s.user_id = $1;

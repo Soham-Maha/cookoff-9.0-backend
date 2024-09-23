@@ -3,6 +3,7 @@ package controllers
 import (
 	"net/http"
 
+	"github.com/CodeChefVIT/cookoff-backend/internal/db"
 	helpers "github.com/CodeChefVIT/cookoff-backend/internal/helpers/auth"
 	"github.com/CodeChefVIT/cookoff-backend/internal/helpers/database"
 	httphelpers "github.com/CodeChefVIT/cookoff-backend/internal/helpers/http"
@@ -24,22 +25,30 @@ func MeHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	submissions, err := database.Queries.GetSubmissionsByUserId(r.Context(), uuid.NullUUID{UUID: id})
+	submissions, err := database.Queries.GetSubmissionsWithRoundByUserId(r.Context(), uuid.NullUUID{UUID: id})
 	if err != nil {
 		logger.Errof("Failed to get submissions: %v", err)
 		httphelpers.WriteError(w, http.StatusInternalServerError, "Failed to get submissions")
 		return
 	}
 
+	submissionsByRound := make(map[int32][]db.GetSubmissionsWithRoundByUserIdRow)
+
+	for _, submission := range submissions {
+		round := submission.Round
+		submissionsByRound[round] = append(submissionsByRound[round], db.GetSubmissionsWithRoundByUserIdRow(submission))
+	}
+
 	data := map[string]any{
 		"username":    user.Name,
 		"round":       user.RoundQualified,
 		"score":       user.Score,
-		"submissions": submissions,
+		"submissions": submissionsByRound,
 	}
 
 	httphelpers.WriteJSON(w, http.StatusOK, map[string]any{
 		"message": "User details fetched successfully",
 		"data":    data,
 	})
+
 }

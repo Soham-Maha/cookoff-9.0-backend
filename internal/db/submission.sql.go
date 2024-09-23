@@ -56,22 +56,40 @@ func (q *Queries) GetSubmission(ctx context.Context, id uuid.UUID) (GetSubmissio
 	return i, err
 }
 
-const getSubmissionsByUserId = `-- name: GetSubmissionsByUserId :many
-SELECT id, question_id, testcases_passed, testcases_failed, runtime, submission_time, testcase_id, language_id, description, memory, user_id, status
-FROM submissions
-WHERE user_id = $1
+const getSubmissionsWithRoundByUserId = `-- name: GetSubmissionsWithRoundByUserId :many
+SELECT q.round, s.id, s.question_id, s.testcases_passed, s.testcases_failed, s.runtime, s.submission_time, s.testcase_id, s.language_id, s.description, s.memory, s.user_id, s.status
+FROM submissions s
+INNER JOIN questions q ON s.question_id = q.id
+WHERE s.user_id = $1
 `
 
-func (q *Queries) GetSubmissionsByUserId(ctx context.Context, userID uuid.NullUUID) ([]Submission, error) {
-	rows, err := q.db.Query(ctx, getSubmissionsByUserId, userID)
+type GetSubmissionsWithRoundByUserIdRow struct {
+	Round           int32
+	ID              uuid.UUID
+	QuestionID      uuid.UUID
+	TestcasesPassed pgtype.Int4
+	TestcasesFailed pgtype.Int4
+	Runtime         pgtype.Numeric
+	SubmissionTime  pgtype.Timestamp
+	TestcaseID      uuid.NullUUID
+	LanguageID      int32
+	Description     *string
+	Memory          pgtype.Int4
+	UserID          uuid.NullUUID
+	Status          *string
+}
+
+func (q *Queries) GetSubmissionsWithRoundByUserId(ctx context.Context, userID uuid.NullUUID) ([]GetSubmissionsWithRoundByUserIdRow, error) {
+	rows, err := q.db.Query(ctx, getSubmissionsWithRoundByUserId, userID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Submission
+	var items []GetSubmissionsWithRoundByUserIdRow
 	for rows.Next() {
-		var i Submission
+		var i GetSubmissionsWithRoundByUserIdRow
 		if err := rows.Scan(
+			&i.Round,
 			&i.ID,
 			&i.QuestionID,
 			&i.TestcasesPassed,
