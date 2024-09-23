@@ -20,6 +20,7 @@ func (s *Server) RegisterRoutes(taskClient *asynq.Client) http.Handler {
 	r.Put("/callback", func(w http.ResponseWriter, r *http.Request) {
 		controllers.CallbackUrl(w, r, taskClient)
 	})
+	r.Get("/testcase", controllers.GetAllTestCasesHandler)
 
 	r.Post("/user/signup", controllers.SignUp)
 
@@ -44,6 +45,17 @@ func (s *Server) RegisterRoutes(taskClient *asynq.Client) http.Handler {
 			Delete("/question/{question_id}", controllers.DeleteQuestion)
 		protected.With(middlewares.RoleAuthorizationMiddleware("admin")).
 			Patch("/question", controllers.UpdateQuestion)
+	})
+
+	r.Group(func(protected chi.Router) {
+		protected.Use(jwtauth.Verifier(auth.TokenAuth))
+		protected.Use(jwtauth.Authenticator(auth.TokenAuth))
+		protected.Use(middlewares.RoleAuthorizationMiddleware("admin"))
+
+		protected.Post("/testcase", controllers.CreateTestCaseHandler)
+		protected.Put("/testcase/{testcase_id}", controllers.UpdateTestCaseHandler)
+		protected.Delete("/testcase/{testcase_id}", controllers.DeleteTestCaseHandler)
+		protected.Get("/testcase/{testcase_id}", controllers.GetTestCaseHandler)
 	})
 
 	return r
