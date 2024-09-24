@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"errors"
 	"net/http"
 
 	helpers "github.com/CodeChefVIT/cookoff-backend/internal/helpers/auth"
@@ -9,6 +10,7 @@ import (
 	logger "github.com/CodeChefVIT/cookoff-backend/internal/helpers/logging"
 	"github.com/go-chi/jwtauth/v5"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 )
 
 func RefreshTokenHandler(w http.ResponseWriter, r *http.Request) {
@@ -42,15 +44,17 @@ func RefreshTokenHandler(w http.ResponseWriter, r *http.Request) {
 
 	user, err := database.Queries.GetUserById(r.Context(), userIdUUID)
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			httphelpers.WriteError(w, http.StatusUnauthorized, "user not found")
+			return
+		}
 		logger.Errof("User not found: %s, err: %v", user.Name, err)
-		httphelpers.WriteError(w, http.StatusUnauthorized, "user not found")
 		return
 	}
 
 	accessToken, err := helpers.GenerateJWT(&user, false)
 	if err != nil {
-		logger.Errof("Failed to generate new access token for user: %s, err: %v", user.Name, err)
-		httphelpers.WriteError(w, http.StatusUnauthorized, "failed to generate token")
+		httphelpers.WriteError(w, http.StatusInternalServerError, "failed to generate token")
 		return
 	}
 
@@ -66,8 +70,7 @@ func RefreshTokenHandler(w http.ResponseWriter, r *http.Request) {
 
 	refreshToken, err := helpers.GenerateJWT(&user, true)
 	if err != nil {
-		logger.Errof("Failed to generate new refresh token for user: %s, err: %v", user.Name, err)
-		httphelpers.WriteError(w, http.StatusUnauthorized, "failed to generate token")
+		httphelpers.WriteError(w, http.StatusInternalServerError, "failed to generate token")
 		return
 	}
 
