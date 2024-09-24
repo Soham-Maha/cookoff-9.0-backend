@@ -104,7 +104,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password)); err != nil {
 		if errors.Is(err, bcrypt.ErrMismatchedHashAndPassword) {
-			httphelpers.WriteError(w, http.StatusBadRequest, "invalid password")
+			httphelpers.WriteError(w, http.StatusConflict, "invalid password")
 			return
 		}
 		httphelpers.WriteError(w, http.StatusInternalServerError, err.Error())
