@@ -18,7 +18,7 @@ import (
 )
 
 type LoginRequest struct {
-	Email    string `json:"email"    validate:"required"`
+	Email    string `json:"email"    validate:"required,email"`
 	Password string `json:"password" validate:"required"`
 }
 
@@ -111,14 +111,12 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 
 	accessToken, err := auth.GenerateJWT(&user, false)
 	if err != nil {
-		logger.Errof("Failed to generate access token for user: %s, err: %v", user.Email, err)
 		httphelpers.WriteError(w, http.StatusInternalServerError, "failed to generate token")
 		return
 	}
 
 	refreshToken, err := auth.GenerateJWT(&user, true)
 	if err != nil {
-		logger.Errof("Failed to generate refresh token for user: %s, err: %v", user.Email, err)
 		httphelpers.WriteError(w, http.StatusInternalServerError, "failed to generate token")
 		return
 	}
@@ -151,6 +149,6 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 
 	httphelpers.WriteJSON(w, http.StatusOK, map[string]any{
 		"message": "Login successful",
-		"user":    data,
+		"data":    data,
 	})
 }
