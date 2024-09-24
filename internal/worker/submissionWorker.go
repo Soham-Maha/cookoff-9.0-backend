@@ -10,6 +10,7 @@ import (
 	"github.com/CodeChefVIT/cookoff-backend/internal/controllers"
 	"github.com/CodeChefVIT/cookoff-backend/internal/db"
 	"github.com/CodeChefVIT/cookoff-backend/internal/helpers/database"
+	logger "github.com/CodeChefVIT/cookoff-backend/internal/helpers/logging"
 	"github.com/CodeChefVIT/cookoff-backend/internal/helpers/submission"
 	"github.com/google/uuid"
 	"github.com/hibiken/asynq"
@@ -20,9 +21,8 @@ const TypeProcessSubmission = "submission:process"
 
 func ProcessSubmissionTask(ctx context.Context, t *asynq.Task) error {
 	var data controllers.Data
-	log.Print("Processing task: ", t.Type)
-	log.Println("Payload: ", string(t.Payload()))
-	log.Println(data)
+	logger.Infof("Processing task: %v", t.Type)
+	logger.Infof("Payload: %v", string(t.Payload()))
 
 	if err := json.Unmarshal(t.Payload(), &data); err != nil {
 		log.Printf("Error unmarshalling task payload: %v\n", err)

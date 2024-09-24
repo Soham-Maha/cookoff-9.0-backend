@@ -4,13 +4,18 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/CodeChefVIT/cookoff-backend/internal/db"
 	helpers "github.com/CodeChefVIT/cookoff-backend/internal/helpers/auth"
 	"github.com/CodeChefVIT/cookoff-backend/internal/helpers/database"
 	httphelpers "github.com/CodeChefVIT/cookoff-backend/internal/helpers/http"
 	logger "github.com/CodeChefVIT/cookoff-backend/internal/helpers/logging"
 	"github.com/google/uuid"
 )
+
+type DashboardSubmission struct {
+	Title       string `json:"title"`
+	Description string `json:"description"`
+	Score       int    `json:"score"`
+}
 
 func MeHandler(w http.ResponseWriter, r *http.Request) {
 	id, err := helpers.GetUserID(w, r)
@@ -33,11 +38,15 @@ func MeHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var submissionsByRound = make(map[string][]db.GetSubmissionsWithRoundByUserIdRow)
+	var submissionsByRound = make(map[string][]DashboardSubmission)
 
 	for _, submission := range submissions {
 		round := fmt.Sprint(submission.Round)
-		submissionsByRound[round] = append(submissionsByRound[round], db.GetSubmissionsWithRoundByUserIdRow(submission))
+		submissionsByRound[round] = append(submissionsByRound[round], DashboardSubmission{
+			Title:       *submission.Title,
+			Description: *submission.Description,
+			Score:       0,
+		})
 	}
 
 	data := map[string]any{
