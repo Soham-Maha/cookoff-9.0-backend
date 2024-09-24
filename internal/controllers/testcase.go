@@ -16,12 +16,12 @@ import (
 )
 
 type createTestCaseRequest struct {
-	ExpectedOutput string  `json:"expected_output" validate:"required"`
-	Memory         string  `json:"memory" validate:"required"`
-	Input          string  `json:"input" validate:"required"`
-	Hidden         *bool   `json:"hidden" validate:"required"`
-	QuestionID     string  `json:"question_id" validate:"required"`
-	Runtime        float64 `json:"runtime" validate:"required"`
+	ExpectedOutput string  `json:"expected_output" validate:"required,omitempty"`
+	Memory         string  `json:"memory"          validate:"required,omitempty"`
+	Input          string  `json:"input"           validate:"required,omitempty"`
+	Hidden         *bool   `json:"hidden"          validate:"required,omitempty"`
+	QuestionID     string  `json:"question_id"     validate:"required,omitempty"`
+	Runtime        float64 `json:"runtime,string"  validate:"required,omitempty"`
 }
 
 func CreateTestCaseHandler(w http.ResponseWriter, r *http.Request) {
@@ -40,7 +40,7 @@ func CreateTestCaseHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var newTestCase = db.CreateTestCaseParams{
+	newTestCase := db.CreateTestCaseParams{
 		ExpectedOutput: testCase.ExpectedOutput,
 		Memory:         testCase.Memory,
 		Input:          testCase.Input,
@@ -114,7 +114,7 @@ func UpdateTestCaseHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var updateData = db.UpdateTestCaseParams{
+	updateData := db.UpdateTestCaseParams{
 		ExpectedOutput: originalTestCase.ExpectedOutput,
 		Memory:         originalTestCase.Memory,
 		Input:          originalTestCase.Input,
@@ -153,7 +153,11 @@ func UpdateTestCaseHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	httphelpers.WriteJSON(w, http.StatusOK, map[string]string{"message": "Test case updated successfully"})
+	httphelpers.WriteJSON(
+		w,
+		http.StatusOK,
+		map[string]string{"message": "Test case updated successfully"},
+	)
 }
 
 func DeleteTestCaseHandler(w http.ResponseWriter, r *http.Request) {
@@ -194,5 +198,4 @@ func GetTestCaseByQuestionID(w http.ResponseWriter, r *http.Request) {
 		"message": "fetched testcases",
 		"data":    testCases,
 	})
-
 }
