@@ -38,7 +38,7 @@ type QuestionRequest struct {
 }
 
 type QuestionByRoundResp struct {
-	ID        uuid.UUID                      `json:"id"`
+	Question  db.Question                    `json:"question"`
 	Testcases []db.GetTestCasesByQuestionRow `json:"testcases"`
 }
 
@@ -86,14 +86,14 @@ func GetQuestionsByRound(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response := []QuestionByRoundResp{}
-	for _, id := range questions {
-		testcase, err := database.Queries.GetTestCasesByQuestion(ctx, id)
+	for _, question := range questions {
+		testcase, err := database.Queries.GetTestCasesByQuestion(ctx, question.ID)
 		if err != nil {
 			httphelpers.WriteError(w, http.StatusBadRequest, err.Error())
 			return
 		}
 		resp := QuestionByRoundResp{
-			ID:        id,
+			Question:  question,
 			Testcases: testcase,
 		}
 		response = append(response, resp)
