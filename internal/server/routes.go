@@ -26,6 +26,7 @@ func (s *Server) RegisterRoutes(taskClient *asynq.Client) http.Handler {
 
 	r.Post("/login/user", controllers.LoginHandler)
 	r.Post("/token/refresh", controllers.RefreshTokenHandler)
+
 	r.Group(func(protected chi.Router) {
 		protected.Use(jwtauth.Verifier(auth.TokenAuth))
 		protected.Use(jwtauth.Authenticator(auth.TokenAuth))
@@ -34,17 +35,15 @@ func (s *Server) RegisterRoutes(taskClient *asynq.Client) http.Handler {
 		protected.Get("/protected", controllers.ProtectedHandler)
 		protected.Post("/submit", controllers.SubmitCode)
 		protected.Post("/runcode", controllers.RunCode)
-		protected.With(middlewares.RoleAuthorizationMiddleware("admin")).
-			Post("/question/create", controllers.CreateQuestion)
-		protected.With(middlewares.RoleAuthorizationMiddleware("admin")).
-			Get("/questions", controllers.GetAllQuestion)
 		protected.Get("/question/round", controllers.GetQuestionsByRound)
-		protected.With(middlewares.RoleAuthorizationMiddleware("admin")).
-			Get("/question/{question_id}", controllers.GetQuestionById)
-		protected.With(middlewares.RoleAuthorizationMiddleware("admin")).
-			Delete("/question/{question_id}", controllers.DeleteQuestion)
-		protected.With(middlewares.RoleAuthorizationMiddleware("admin")).
-			Patch("/question", controllers.UpdateQuestion)
+
+		adminRoutes := protected.With(middlewares.RoleAuthorizationMiddleware("admin"))
+
+		adminRoutes.Post("/question/create", controllers.CreateQuestion)
+		adminRoutes.Get("/questions", controllers.GetAllQuestion)
+		adminRoutes.Get("/question/{question_id}", controllers.GetQuestionById)
+		adminRoutes.Delete("/question/{question_id}", controllers.DeleteQuestion)
+		adminRoutes.Patch("/question", controllers.UpdateQuestion)
 	})
 
 	r.Group(func(protected chi.Router) {
