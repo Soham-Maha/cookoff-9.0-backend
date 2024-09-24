@@ -28,10 +28,10 @@ func (s *Server) RegisterRoutes(taskClient *asynq.Client) http.Handler {
 	r.Post("/token/refresh", controllers.RefreshTokenHandler)
 	r.Group(func(protected chi.Router) {
 		protected.With(middlewares.RoleAuthorizationMiddleware("admin")).Post("/upgrade", controllers.UpgradeUserToRound)
-		protected.With(middlewares.RoleAuthorizationMiddleware("admin")).Post("/roast", controllers.BanUsers)
-		protected.With(middlewares.RoleAuthorizationMiddleware("admin")).Post("/unroast", controllers.UnbanUsers)
-		protected.With(middlewares.RoleAuthorizationMiddleware("admin")).Post("/round/{round_number}/enable", controllers.EnableRound)
-		protected.With(middlewares.RoleAuthorizationMiddleware("admin")).Post("/round/{round_number}/disable", controllers.DisableRound)
+		protected.With(middlewares.RoleAuthorizationMiddleware("admin")).Post("/roast", controllers.BanUser)
+		protected.With(middlewares.RoleAuthorizationMiddleware("admin")).Post("/unroast", controllers.UnbanUser)
+		protected.With(middlewares.RoleAuthorizationMiddleware("admin")).Post("/round/", controllers.SetRoundStatus)
+		protected.With(middlewares.RoleAuthorizationMiddleware("admin")).Get("/users", controllers.GetAllUsers)
 		protected.Use(jwtauth.Verifier(auth.TokenAuth))
 		protected.Use(jwtauth.Authenticator(auth.TokenAuth))
 

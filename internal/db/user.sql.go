@@ -7,15 +7,26 @@ package db
 
 import (
 	"context"
-    "github.com/lib/pq"
+
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const banUser = `-- name: BanUser :exec
+UPDATE users
+SET is_banned = TRUE
+WHERE id = $1
+`
+
+func (q *Queries) BanUser(ctx context.Context, id uuid.UUID) error {
+	_, err := q.db.Exec(ctx, banUser, id)
+	return err
+}
+
 const createUser = `-- name: CreateUser :one
 INSERT INTO users (id, email, reg_no, password, role, round_qualified, score, name)
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-RETURNING id, email, reg_no, password, role, round_qualified, score, name
+RETURNING id, email, reg_no, password, role, round_qualified, score, name, is_banned
 `
 
 type CreateUserParams struct {
@@ -50,8 +61,55 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 		&i.RoundQualified,
 		&i.Score,
 		&i.Name,
+		&i.IsBanned,
 	)
 	return i, err
+}
+
+const getAllUsers = `-- name: GetAllUsers :many
+SELECT id, email, reg_no, password, role, round_qualified, score, name,is_banned
+FROM users
+`
+
+type GetAllUsersRow struct {
+	ID             uuid.UUID
+	Email          string
+	RegNo          string
+	Password       string
+	Role           string
+	RoundQualified int32
+	Score          pgtype.Int4
+	Name           string
+	IsBanned       pgtype.Bool
+}
+
+func (q *Queries) GetAllUsers(ctx context.Context) ([]GetAllUsersRow, error) {
+	rows, err := q.db.Query(ctx, getAllUsers)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetAllUsersRow
+	for rows.Next() {
+		var i GetAllUsersRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Email,
+			&i.RegNo,
+			&i.Password,
+			&i.Role,
+			&i.RoundQualified,
+			&i.Score,
+			&i.Name,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const getUserByEmail = `-- name: GetUserByEmail :one
@@ -60,9 +118,20 @@ FROM users
 WHERE email = $1
 `
 
-func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error) {
+type GetUserByEmailRow struct {
+	ID             uuid.UUID
+	Email          string
+	RegNo          string
+	Password       string
+	Role           string
+	RoundQualified int32
+	Score          pgtype.Int4
+	Name           string
+}
+
+func (q *Queries) GetUserByEmail(ctx context.Context, email string) (GetUserByEmailRow, error) {
 	row := q.db.QueryRow(ctx, getUserByEmail, email)
-	var i User
+	var i GetUserByEmailRow
 	err := row.Scan(
 		&i.ID,
 		&i.Email,
@@ -82,9 +151,22 @@ FROM users
 WHERE id = $1
 `
 
-func (q *Queries) GetUserById(ctx context.Context, id uuid.UUID) (User, error) {
+type GetUserByIdRow struct {
+	ID             uuid.UUID
+	Email          string
+	RegNo          string
+	Password       string
+	Role           string
+	RoundQualified int32
+	Score          pgtype.Int4
+	Name           string
+	IsBanned       bool
+
+}
+
+func (q *Queries) GetUserById(ctx context.Context, id uuid.UUID) (GetUserByIdRow, error) {
 	row := q.db.QueryRow(ctx, getUserById, id)
-	var i User
+	var i GetUserByIdRow
 	err := row.Scan(
 		&i.ID,
 		&i.Email,
@@ -104,9 +186,20 @@ FROM users
 WHERE name = $1
 `
 
-func (q *Queries) GetUserByUsername(ctx context.Context, name string) (User, error) {
+type GetUserByUsernameRow struct {
+	ID             uuid.UUID
+	Email          string
+	RegNo          string
+	Password       string
+	Role           string
+	RoundQualified int32
+	Score          pgtype.Int4
+	Name           string
+}
+
+func (q *Queries) GetUserByUsername(ctx context.Context, name string) (GetUserByUsernameRow, error) {
 	row := q.db.QueryRow(ctx, getUserByUsername, name)
-	var i User
+	var i GetUserByUsernameRow
 	err := row.Scan(
 		&i.ID,
 		&i.Email,
@@ -119,70 +212,28 @@ func (q *Queries) GetUserByUsername(ctx context.Context, name string) (User, err
 	)
 	return i, err
 }
-const getAllUsers = `-- name: GetAllUsers :many
-SELECT id, email, reg_no, role, round_qualified, score, name
-FROM users
+
+const unbanUser = `-- name: UnbanUser :exec
+UPDATE users
+SET is_banned = FALSE
+WHERE id = $1
 `
-func (q *Queries) GetAllUsers(ctx context.Context) ([]User, error) {
-	rows, err := q.db.Query(ctx, getAllUsers)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var users []User
-	for rows.Next() {
-		var i User
-		if err := rows.Scan(
-			&i.ID,
-			&i.Email,
-			&i.RegNo,
-			&i.Password,
-			&i.Role,
-			&i.RoundQualified,
-			&i.Score,
-			&i.Name,
-		); err != nil {
-			return nil, err
-		}
-		users = append(users, i)
-	}
-	return users, nil
-}
-func (q *Queries) UpgradeUserToRound(ctx context.Context, userIDs []uuid.UUID, round int) error {
-	_, err := q.db.Exec(ctx, `-- name: UpgradeUserToRound :exec
-	UPDATE users
-	SET round_qualified = GREATEST(round_qualified, $2)
-	WHERE id = ANY($1::uuid[]);`, pq.Array(userIDs), round)
+func (q *Queries) UnbanUser(ctx context.Context, id uuid.UUID) error {
+	_, err := q.db.Exec(ctx, unbanUser, id)
 	return err
 }
-func (q *Queries) BanUsers(ctx context.Context, userIDs []uuid.UUID) error {
-	_, err := q.db.Exec(ctx, `-- name: BanUser :exec
-	UPDATE users
-	SET banned = true
-	WHERE id = ANY($1::uuid[]);`, pq.Array(userIDs))
-	return err
+
+const upgradeUserToRound = `-- name: UpgradeUserToRound :exec
+UPDATE users
+SET round_qualified = GREATEST(round_qualified, $2)
+WHERE id = ANY($1::uuid[])
+`
+
+type UpgradeUserToRoundParams struct {
+    UserIDs        []uuid.UUID 
+    RoundQualified int32       
 }
-func (q *Queries) UnbanUsers(ctx context.Context, userIDs []uuid.UUID) error {
-	_, err := q.db.Exec(ctx, `-- name: UnbanUser :exec
-	UPDATE users
-	SET banned = false
-	WHERE id = ANY($1::uuid[]);`, pq.Array(userIDs))
-	return err
-}
-func (q *Queries) EnableRound(ctx context.Context, roundNumber int) error {
-	_, err := q.db.Exec(ctx, `-- name: EnableRound :exec
-	UPDATE rounds
-	SET enabled = false;
-	
-	UPDATE rounds
-	SET enabled = true
-	WHERE round_number = $1;`, roundNumber)
-	return err
-}
-func (q *Queries) DisableRound(ctx context.Context, roundNumber int) error {
-	_, err := q.db.Exec(ctx, `-- name: DisableRound :exec
-	UPDATE rounds
-	SET enabled = false
-	WHERE round_number = $1;`, roundNumber)
-	return err
+func (q *Queries) UpgradeUserToRound(ctx context.Context, arg UpgradeUserToRoundParams) error {
+    _, err := q.db.Exec(ctx, upgradeUserToRound, arg.UserIDs, arg.RoundQualified)
+    return err
 }

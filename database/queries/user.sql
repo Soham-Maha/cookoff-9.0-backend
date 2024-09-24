@@ -19,23 +19,16 @@ FROM users
 WHERE id = $1;
 -- name: GetAllUsers :many
 SELECT id, email, reg_no, password, role, round_qualified, score, name
-FROM users
+FROM users;
 -- name: UpgradeUserToRound :exec
 UPDATE users
 SET round_qualified = GREATEST(round_qualified, $2)
 WHERE id = ANY($1::uuid[]);
 -- name: BanUser :exec
 UPDATE users
-SET banned = true
-WHERE id = ANY($1::uuid[]);
--- name: EnableRound :exec
-UPDATE rounds
-SET enabled = false;
-
-UPDATE rounds
-SET enabled = true
-WHERE round_number = $1;
--- name: DisableRound :exec
-UPDATE rounds
-SET enabled = false
-WHERE round_number = $1;
+SET is_banned = TRUE
+WHERE id = $1;
+-- name: UnbanUser :exec
+UPDATE users
+SET is_banned = FALSE
+WHERE id = $1;

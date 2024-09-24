@@ -23,7 +23,6 @@ func BanCheckMiddleware(next http.Handler) http.Handler {
         next.ServeHTTP(w, r)
     })
 }
-
 func isUserBanned(userID uuid.UUID) bool {
     ctx := context.Background()
     user, err := database.Queries.GetUserById(ctx, userID)
