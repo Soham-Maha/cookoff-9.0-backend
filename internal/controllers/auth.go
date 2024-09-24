@@ -108,14 +108,14 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		httphelpers.WriteError(w, http.StatusInternalServerError, err.Error())
 	}
 
-	accessToken, accessExp, err := helpers.GenerateJWT(&user, false)
+	accessToken, err := helpers.GenerateJWT(&user, false)
 	if err != nil {
 		logger.Errof("Failed to generate access token for user: %s, err: %v", user.Email, err)
 		httphelpers.WriteError(w, http.StatusUnauthorized, "failed to generate token")
 		return
 	}
 
-	refreshToken, refreshExp, err := helpers.GenerateJWT(&user, true)
+	refreshToken, err := helpers.GenerateJWT(&user, true)
 	if err != nil {
 		logger.Errof("Failed to generate refresh token for user: %s, err: %v", user.Email, err)
 		httphelpers.WriteError(w, http.StatusUnauthorized, "failed to generate token")
@@ -125,19 +125,21 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	http.SetCookie(w, &http.Cookie{
 		Name:     "jwt",
 		Value:    accessToken,
-		Expires:  accessExp,
+		MaxAge:   1000,
 		HttpOnly: true,
 		Secure:   true,
 		Path:     "/",
+		SameSite: http.SameSiteNoneMode,
 	})
 
 	http.SetCookie(w, &http.Cookie{
 		Name:     "refresh_token",
 		Value:    refreshToken,
-		Expires:  refreshExp,
+		MaxAge:   3600,
 		HttpOnly: true,
 		Secure:   true,
 		Path:     "/",
+		SameSite: http.SameSiteNoneMode,
 	})
 
 	data := map[string]any{

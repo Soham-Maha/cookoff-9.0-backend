@@ -57,7 +57,7 @@ func (q *Queries) GetSubmission(ctx context.Context, id uuid.UUID) (GetSubmissio
 }
 
 const getSubmissionsWithRoundByUserId = `-- name: GetSubmissionsWithRoundByUserId :many
-SELECT q.round, s.id, s.question_id, s.testcases_passed, s.testcases_failed, s.runtime, s.submission_time, s.testcase_id, s.language_id, s.description, s.memory, s.user_id, s.status
+SELECT q.round, q.title, q.description, s.id, s.question_id, s.testcases_passed, s.testcases_failed, s.runtime, s.submission_time, s.testcase_id, s.language_id, s.description, s.memory, s.user_id, s.status
 FROM submissions s
 INNER JOIN questions q ON s.question_id = q.id
 WHERE s.user_id = $1
@@ -65,6 +65,8 @@ WHERE s.user_id = $1
 
 type GetSubmissionsWithRoundByUserIdRow struct {
 	Round           int32
+	Title           *string
+	Description     *string
 	ID              uuid.UUID
 	QuestionID      uuid.UUID
 	TestcasesPassed pgtype.Int4
@@ -73,7 +75,7 @@ type GetSubmissionsWithRoundByUserIdRow struct {
 	SubmissionTime  pgtype.Timestamp
 	TestcaseID      uuid.NullUUID
 	LanguageID      int32
-	Description     *string
+	Description_2   *string
 	Memory          pgtype.Int4
 	UserID          uuid.NullUUID
 	Status          *string
@@ -90,6 +92,8 @@ func (q *Queries) GetSubmissionsWithRoundByUserId(ctx context.Context, userID uu
 		var i GetSubmissionsWithRoundByUserIdRow
 		if err := rows.Scan(
 			&i.Round,
+			&i.Title,
+			&i.Description,
 			&i.ID,
 			&i.QuestionID,
 			&i.TestcasesPassed,
@@ -98,7 +102,7 @@ func (q *Queries) GetSubmissionsWithRoundByUserId(ctx context.Context, userID uu
 			&i.SubmissionTime,
 			&i.TestcaseID,
 			&i.LanguageID,
-			&i.Description,
+			&i.Description_2,
 			&i.Memory,
 			&i.UserID,
 			&i.Status,

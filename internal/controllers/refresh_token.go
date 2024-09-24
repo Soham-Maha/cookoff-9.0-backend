@@ -47,7 +47,7 @@ func RefreshTokenHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	accessToken, accessExp, err := helpers.GenerateJWT(&user, false)
+	accessToken, err := helpers.GenerateJWT(&user, false)
 	if err != nil {
 		logger.Errof("Failed to generate new access token for user: %s, err: %v", user.Name, err)
 		httphelpers.WriteError(w, http.StatusUnauthorized, "failed to generate token")
@@ -57,13 +57,14 @@ func RefreshTokenHandler(w http.ResponseWriter, r *http.Request) {
 	http.SetCookie(w, &http.Cookie{
 		Name:     "jwt",
 		Value:    accessToken,
-		Expires:  accessExp,
+		MaxAge:   1000,
 		HttpOnly: true,
 		Secure:   true,
 		Path:     "/",
+		SameSite: http.SameSiteNoneMode,
 	})
 
-	refreshToken, refreshExp, err := helpers.GenerateJWT(&user, true)
+	refreshToken, err := helpers.GenerateJWT(&user, true)
 	if err != nil {
 		logger.Errof("Failed to generate new refresh token for user: %s, err: %v", user.Name, err)
 		httphelpers.WriteError(w, http.StatusUnauthorized, "failed to generate token")
@@ -73,10 +74,11 @@ func RefreshTokenHandler(w http.ResponseWriter, r *http.Request) {
 	http.SetCookie(w, &http.Cookie{
 		Name:     "refresh_token",
 		Value:    refreshToken,
-		Expires:  refreshExp,
+		MaxAge:   3600,
 		HttpOnly: true,
 		Secure:   true,
 		Path:     "/",
+		SameSite: http.SameSiteNoneMode,
 	})
 
 	httphelpers.WriteJSON(w, http.StatusOK, map[string]string{

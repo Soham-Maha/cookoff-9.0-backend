@@ -80,8 +80,8 @@ func RunCode(w http.ResponseWriter, r *http.Request) {
 		payload = submission.Submission{
 			LanguageID: req.LanguageID,
 			SourceCode: submission.B64(req.SourceCode),
-			Input:      submission.B64(*testcase.Input),
-			Output:     submission.B64(*testcase.ExpectedOutput),
+			Input:      submission.B64(testcase.Input),
+			Output:     submission.B64(testcase.ExpectedOutput),
 			Runtime:    runtime.Float64 * float64(runtime_mut),
 		}
 
@@ -108,11 +108,11 @@ func RunCode(w http.ResponseWriter, r *http.Request) {
 
 		data.StdOut, _ = submission.DecodeB64(data.StdOut)
 		data.CompilerOutput, _ = submission.DecodeB64(data.CompilerOutput)
-		data.ExpectedOutput = string(*testcase.ExpectedOutput)
+		data.ExpectedOutput = testcase.ExpectedOutput
 		data.Message, _ = submission.DecodeB64(data.Message)
 		data.StdErr, _ = submission.DecodeB64(data.StdErr)
 		data.TestCaseID = testcase.ID.String()
-		data.Input = string(*testcase.Input)
+		data.Input = testcase.Input
 		response.Result[i] = data
 		status, _ := data.Status.ID.Int64()
 		if status == 3 {

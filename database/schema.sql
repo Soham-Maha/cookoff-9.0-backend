@@ -41,11 +41,11 @@ CREATE TABLE submissions (
 
 CREATE TABLE testcases (
 	id UUID NOT NULL UNIQUE,
-	expected_output TEXT,
-	memory TEXT,
-	input TEXT,
-	hidden BOOLEAN,
-	runtime DECIMAL,
+	expected_output TEXT NOT NULL UNIQUE,
+	memory TEXT NOT NULL UNIQUE,
+	input TEXT NOT NULL UNIQUE,
+	hidden BOOLEAN NOT NULL UNIQUE,
+	runtime DECIMAL NOT NULL UNIQUE,
 	question_id UUID NOT NULL,
 	PRIMARY KEY(id)
 );

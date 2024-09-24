@@ -19,7 +19,7 @@ func InitJWT() {
 	TokenAuth = jwtauth.New("HS256", []byte(jwtKey), nil)
 }
 
-func GenerateJWT(user *db.User, isRefresh bool) (string, time.Time, error) {
+func GenerateJWT(user *db.User, isRefresh bool) (string, error) {
 	var expirationTime time.Time
 
 	if !isRefresh {
@@ -31,7 +31,7 @@ func GenerateJWT(user *db.User, isRefresh bool) (string, time.Time, error) {
 			"type":     "access",
 			"exp":      expirationTime.Unix(),
 		})
-		return tokenString, expirationTime, err
+		return tokenString, err
 	}
 
 	expirationTime = time.Now().Add(time.Hour*1 + time.Minute*30)
@@ -40,5 +40,5 @@ func GenerateJWT(user *db.User, isRefresh bool) (string, time.Time, error) {
 		"type":    "refresh",
 		"exp":     expirationTime.Unix(),
 	})
-	return tokenString, expirationTime, err
+	return tokenString, err
 }

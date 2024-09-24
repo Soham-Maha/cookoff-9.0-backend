@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"net/http"
 	"os"
 
 	"github.com/CodeChefVIT/cookoff-backend/internal/db"
@@ -41,8 +40,8 @@ func CreateSubmission(ctx context.Context, question_id uuid.UUID, language_id in
 		payload.Submissions[i] = Submission{
 			SourceCode: B64(source),
 			LanguageID: language_id,
-			Input:      B64(*testcase.Input),
-			Output:     B64(*testcase.ExpectedOutput),
+			Input:      B64(testcase.Input),
+			Output:     B64(testcase.ExpectedOutput),
 			Runtime:    runtime.Float64 * float64(runtime_mut),
 			Callback:   callback_url,
 		}
@@ -55,9 +54,9 @@ func CreateSubmission(ctx context.Context, question_id uuid.UUID, language_id in
 	return payloadJSON, nil
 }
 
-func StoreTokens(ctx context.Context, subID uuid.UUID, r *http.Response) error {
+func StoreTokens(ctx context.Context, subID uuid.UUID, resp []byte) error {
 	var tokens []Token
-	err := json.NewDecoder(r.Body).Decode(&tokens)
+	err := json.Unmarshal(resp, &tokens)
 	if err != nil {
 		return fmt.Errorf("Invalid request payload")
 	}
