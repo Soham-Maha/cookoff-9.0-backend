@@ -97,7 +97,8 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 			httphelpers.WriteError(w, http.StatusNotFound, "user not found")
 			return
 		}
-		httphelpers.WriteError(w, http.StatusUnauthorized, "invalid credentials")
+		logger.Infof("received error from database %v", err.Error())
+		httphelpers.WriteError(w, http.StatusInternalServerError, "some error occurred")
 		return
 	}
 
