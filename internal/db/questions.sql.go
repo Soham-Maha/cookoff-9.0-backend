@@ -86,32 +86,23 @@ func (q *Queries) GetQuestion(ctx context.Context, id uuid.UUID) (Question, erro
 }
 
 const getQuestionByRound = `-- name: GetQuestionByRound :many
-SELECT id, description, title, input_format, points, round, constraints, output_format FROM questions
+SELECT id FROM questions
 WHERE round = $1
 `
 
-func (q *Queries) GetQuestionByRound(ctx context.Context, round int32) ([]Question, error) {
+func (q *Queries) GetQuestionByRound(ctx context.Context, round int32) ([]uuid.UUID, error) {
 	rows, err := q.db.Query(ctx, getQuestionByRound, round)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Question
+	var items []uuid.UUID
 	for rows.Next() {
-		var i Question
-		if err := rows.Scan(
-			&i.ID,
-			&i.Description,
-			&i.Title,
-			&i.InputFormat,
-			&i.Points,
-			&i.Round,
-			&i.Constraints,
-			&i.OutputFormat,
-		); err != nil {
+		var id uuid.UUID
+		if err := rows.Scan(&id); err != nil {
 			return nil, err
 		}
-		items = append(items, i)
+		items = append(items, id)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err

@@ -21,5 +21,5 @@ SET description = $1, title = $2, input_format = $3, points = $4, round = $5, co
 WHERE id = $8;
 
 -- name: GetQuestionByRound :many
-SELECT * FROM questions
+SELECT id FROM questions
 WHERE round = $1;
