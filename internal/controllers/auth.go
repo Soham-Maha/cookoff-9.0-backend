@@ -7,25 +7,25 @@ import (
 
 	"github.com/CodeChefVIT/cookoff-backend/internal/db"
 	"github.com/CodeChefVIT/cookoff-backend/internal/helpers/auth"
-	helpers "github.com/CodeChefVIT/cookoff-backend/internal/helpers/auth"
 	"github.com/CodeChefVIT/cookoff-backend/internal/helpers/database"
 	httphelpers "github.com/CodeChefVIT/cookoff-backend/internal/helpers/http"
 	logger "github.com/CodeChefVIT/cookoff-backend/internal/helpers/logging"
 	"github.com/CodeChefVIT/cookoff-backend/internal/helpers/validator"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 	"golang.org/x/crypto/bcrypt"
 )
 
 type LoginRequest struct {
-	Email    string `json:"email" validate:"required"`
+	Email    string `json:"email"    validate:"required,email"`
 	Password string `json:"password" validate:"required"`
 }
 
 type SignupRequest struct {
-	Email string `json:"email" validate:"required"`
-	Name  string `json:"name" validate:"required"`
-	RegNo string `json:"reg_no" validate:"required"`
+	Email string `json:"email"    validate:"required"`
+	Name  string `json:"name"     validate:"required"`
+	RegNo string `json:"reg_no"   validate:"required"`
 	Key   string `json:"fuck_you" validate:"required"`
 }
 
@@ -93,32 +93,32 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 
 	user, err := database.Queries.GetUserByEmail(r.Context(), req.Email)
 	if err != nil {
-		logger.Errof("User not found or invalid credentials for email: %s, err: %v", req.Email, err)
-		httphelpers.WriteError(w, http.StatusUnauthorized, "invalid credentials")
+		if errors.Is(err, pgx.ErrNoRows) {
+			httphelpers.WriteError(w, http.StatusNotFound, "user not found")
+			return
+		}
+		logger.Infof("received error from database %v", err.Error())
+		httphelpers.WriteError(w, http.StatusInternalServerError, "some error occurred")
 		return
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password)); err != nil {
 		if errors.Is(err, bcrypt.ErrMismatchedHashAndPassword) {
-			httphelpers.WriteJSON(w, http.StatusBadRequest, map[string]string{
-				"message": "invalid password",
-			})
+			httphelpers.WriteError(w, http.StatusConflict, "invalid password")
 			return
 		}
 		httphelpers.WriteError(w, http.StatusInternalServerError, err.Error())
 	}
 
-	accessToken, err := helpers.GenerateJWT(&user, false)
+	accessToken, err := auth.GenerateJWT(&user, false)
 	if err != nil {
-		logger.Errof("Failed to generate access token for user: %s, err: %v", user.Email, err)
-		httphelpers.WriteError(w, http.StatusUnauthorized, "failed to generate token")
+		httphelpers.WriteError(w, http.StatusInternalServerError, "failed to generate token")
 		return
 	}
 
-	refreshToken, err := helpers.GenerateJWT(&user, true)
+	refreshToken, err := auth.GenerateJWT(&user, true)
 	if err != nil {
-		logger.Errof("Failed to generate refresh token for user: %s, err: %v", user.Email, err)
-		httphelpers.WriteError(w, http.StatusUnauthorized, "failed to generate token")
+		httphelpers.WriteError(w, http.StatusInternalServerError, "failed to generate token")
 		return
 	}
 
@@ -150,6 +150,6 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 
 	httphelpers.WriteJSON(w, http.StatusOK, map[string]any{
 		"message": "Login successful",
-		"user":    data,
+		"data":    data,
 	})
 }
