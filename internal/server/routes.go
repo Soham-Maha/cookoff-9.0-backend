@@ -54,8 +54,9 @@ func (s *Server) RegisterRoutes(taskClient *asynq.Client) http.Handler {
 
 		protected.Post("/testcase", controllers.CreateTestCaseHandler)
 		protected.Put("/testcase/{testcase_id}", controllers.UpdateTestCaseHandler)
-		protected.Delete("/testcase/{testcase_id}", controllers.DeleteTestCaseHandler)
 		protected.Get("/testcase/{testcase_id}", controllers.GetTestCaseHandler)
+		protected.Delete("/testcase/{testcase_id}", controllers.DeleteTestCaseHandler)
+		protected.Get("/questions/{question_id}/testcases", controllers.GetTestCaseByQuestionID)
 	})
 
 	return r
