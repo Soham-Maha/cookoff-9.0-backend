@@ -153,3 +153,31 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		"data":    data,
 	})
 }
+
+func Logout(w http.ResponseWriter, r *http.Request) {
+	jwt, err := r.Cookie("jwt")
+	if err != nil && !errors.Is(err, http.ErrNoCookie) {
+		httphelpers.WriteError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	refresh, err := r.Cookie("refresh_token")
+	if err != nil && !errors.Is(err, http.ErrNoCookie) {
+		httphelpers.WriteError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	if jwt != nil {
+		jwt.MaxAge = -1
+		http.SetCookie(w, jwt)
+	}
+
+	if refresh != nil {
+		refresh.MaxAge = -1
+		http.SetCookie(w, refresh)
+	}
+
+	httphelpers.WriteJSON(w, http.StatusOK, map[string]any{
+		"message": "logged out successfully",
+	})
+}
