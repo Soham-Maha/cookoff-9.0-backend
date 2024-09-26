@@ -94,6 +94,39 @@ func (q *Queries) GetAllTestCases(ctx context.Context) ([]Testcase, error) {
 	return items, nil
 }
 
+const getPublicTestCasesByQuestion = `-- name: GetPublicTestCasesByQuestion :many
+SELECT id, expected_output, memory, input, hidden, runtime, question_id FROM testcases
+WHERE question_id = $1 AND hidden = false
+`
+
+func (q *Queries) GetPublicTestCasesByQuestion(ctx context.Context, questionID uuid.UUID) ([]Testcase, error) {
+	rows, err := q.db.Query(ctx, getPublicTestCasesByQuestion, questionID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Testcase
+	for rows.Next() {
+		var i Testcase
+		if err := rows.Scan(
+			&i.ID,
+			&i.ExpectedOutput,
+			&i.Memory,
+			&i.Input,
+			&i.Hidden,
+			&i.Runtime,
+			&i.QuestionID,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getTestCase = `-- name: GetTestCase :one
 SELECT 
     id, 

@@ -15,22 +15,22 @@ import (
 )
 
 type Question struct {
-	ID               uuid.UUID `json:"id"`
 	Description      string    `json:"description"`
 	Title            string    `json:"title"`
 	InputFormat      []string  `json:"input_format"`
-	Points           int32     `json:"points"`
-	Round            int32     `json:"round"`
 	Constraints      []string  `json:"constraints"`
 	OutputFormat     []string  `json:"output_format"`
 	SampleTestInput  []string  `json:"sample_test_input"`
 	SampleTestOutput []string  `json:"sample_test_output"`
 	Explanation      []string  `json:"sample_explanation"`
+	Points           int32     `json:"points"`
+	Round            int32     `json:"round"`
+	ID               uuid.UUID `json:"id"`
 }
 
 type QuestionByRoundResp struct {
-	Question  db.Question                    `json:"question"`
-	Testcases []db.GetTestCasesByQuestionRow `json:"testcases"`
+	Question  db.Question   `json:"question"`
+	Testcases []db.Testcase `json:"testcases"`
 }
 
 func GetAllQuestion(w http.ResponseWriter, r *http.Request) {
@@ -78,11 +78,12 @@ func GetQuestionsByRound(w http.ResponseWriter, r *http.Request) {
 
 	response := []QuestionByRoundResp{}
 	for _, question := range questions {
-		testcase, err := database.Queries.GetTestCasesByQuestion(ctx, question.ID)
+		testcase, err := database.Queries.GetPublicTestCasesByQuestion(ctx, question.ID)
 		if err != nil {
 			httphelpers.WriteError(w, http.StatusBadRequest, err.Error())
 			return
 		}
+
 		resp := QuestionByRoundResp{
 			Question:  question,
 			Testcases: testcase,
