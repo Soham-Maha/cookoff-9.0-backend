@@ -3,12 +3,14 @@ package submission
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 
 	"github.com/CodeChefVIT/cookoff-backend/internal/db"
 	"github.com/CodeChefVIT/cookoff-backend/internal/helpers/database"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 )
 
 type Token struct {
@@ -19,11 +21,22 @@ type Payload struct {
 	Submissions []Submission `json:"submissions"`
 }
 
-func CreateSubmission(ctx context.Context, question_id uuid.UUID, language_id int, source string) ([]byte, error) {
+func CreateSubmission(
+	ctx context.Context,
+	question_id uuid.UUID,
+	language_id int,
+	source string,
+) ([]byte, error) {
 	callback_url := os.Getenv("CALLBACK_URL")
 
-	testcases, err := database.Queries.GetTestCases(ctx, db.GetTestCasesParams{QuestionID: question_id, Column2: false})
+	testcases, err := database.Queries.GetTestCases(
+		ctx,
+		db.GetTestCasesParams{QuestionID: question_id, Column2: false},
+	)
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, fmt.Errorf("no testcases exist for this question")
+		}
 		return nil, fmt.Errorf("error getting test cases for question_id %d: %v", question_id, err)
 	}
 	payload := Payload{
@@ -58,13 +71,13 @@ func StoreTokens(ctx context.Context, subID uuid.UUID, resp []byte) error {
 	var tokens []Token
 	err := json.Unmarshal(resp, &tokens)
 	if err != nil {
-		return fmt.Errorf("Invalid request payload")
+		return fmt.Errorf("invalid request payload")
 	}
 
 	for _, t := range tokens {
 		err := Tokens.AddToken(ctx, t.Token, subID.String())
 		if err != nil {
-			return fmt.Errorf("Failed to add token")
+			return fmt.Errorf("failed to add token")
 		}
 	}
 	return nil
