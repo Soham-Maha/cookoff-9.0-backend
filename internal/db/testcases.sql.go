@@ -29,7 +29,7 @@ INSERT INTO testcases (
 type CreateTestCaseParams struct {
 	ID             uuid.UUID
 	ExpectedOutput string
-	Memory         string
+	Memory         pgtype.Numeric
 	Input          string
 	Hidden         bool
 	QuestionID     uuid.UUID
@@ -110,7 +110,7 @@ WHERE id = $1
 type GetTestCaseRow struct {
 	ID             uuid.UUID
 	ExpectedOutput string
-	Memory         string
+	Memory         pgtype.Numeric
 	Input          string
 	Hidden         bool
 	QuestionID     uuid.UUID
@@ -148,7 +148,7 @@ WHERE question_id = $1
 type GetTestCasesByQuestionRow struct {
 	ID             uuid.UUID
 	ExpectedOutput string
-	Memory         string
+	Memory         pgtype.Numeric
 	Input          string
 	Hidden         bool
 	QuestionID     uuid.UUID
@@ -196,7 +196,7 @@ WHERE id = $6
 
 type UpdateTestCaseParams struct {
 	ExpectedOutput string
-	Memory         string
+	Memory         pgtype.Numeric
 	Input          string
 	Hidden         bool
 	Runtime        pgtype.Numeric
