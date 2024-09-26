@@ -7,7 +7,7 @@ CREATE TABLE users (
 	round_qualified INTEGER NOT NULL DEFAULT 0,
 	score INTEGER DEFAULT 0,
 	name TEXT NOT NULL,
-	is_banned BOOLEAN DEFAULT FALSE,
+	is_banned BOOLEAN NOT NULL DEFAULT false,
 	PRIMARY KEY(id)
 );
 
@@ -41,11 +41,11 @@ CREATE TABLE submissions (
 
 CREATE TABLE testcases (
 	id UUID NOT NULL UNIQUE,
-	expected_output TEXT NOT NULL UNIQUE,
-	memory TEXT NOT NULL UNIQUE,
-	input TEXT NOT NULL UNIQUE,
-	hidden BOOLEAN NOT NULL UNIQUE,
-	runtime DECIMAL NOT NULL UNIQUE,
+	expected_output TEXT NOT NULL,
+	memory TEXT NOT NULL,
+	input TEXT NOT NULL,
+	hidden BOOLEAN NOT NULL,
+	runtime DECIMAL NOT NULL,
 	question_id UUID NOT NULL,
 	PRIMARY KEY(id)
 );

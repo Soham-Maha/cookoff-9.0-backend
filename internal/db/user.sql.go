@@ -67,31 +67,19 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 }
 
 const getAllUsers = `-- name: GetAllUsers :many
-SELECT id, email, reg_no, password, role, round_qualified, score, name,is_banned
+SELECT id, email, reg_no, password, role, round_qualified, score, name, is_banned
 FROM users
 `
 
-type GetAllUsersRow struct {
-	ID             uuid.UUID
-	Email          string
-	RegNo          string
-	Password       string
-	Role           string
-	RoundQualified int32
-	Score          pgtype.Int4
-	Name           string
-	IsBanned       pgtype.Bool
-}
-
-func (q *Queries) GetAllUsers(ctx context.Context) ([]GetAllUsersRow, error) {
+func (q *Queries) GetAllUsers(ctx context.Context) ([]User, error) {
 	rows, err := q.db.Query(ctx, getAllUsers)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []GetAllUsersRow
+	var items []User
 	for rows.Next() {
-		var i GetAllUsersRow
+		var i User
 		if err := rows.Scan(
 			&i.ID,
 			&i.Email,
@@ -101,6 +89,7 @@ func (q *Queries) GetAllUsers(ctx context.Context) ([]GetAllUsersRow, error) {
 			&i.RoundQualified,
 			&i.Score,
 			&i.Name,
+			&i.IsBanned,
 		); err != nil {
 			return nil, err
 		}
@@ -113,25 +102,14 @@ func (q *Queries) GetAllUsers(ctx context.Context) ([]GetAllUsersRow, error) {
 }
 
 const getUserByEmail = `-- name: GetUserByEmail :one
-SELECT id, email, reg_no, password, role, round_qualified, score, name
+SELECT id, email, reg_no, password, role, round_qualified, score, name, is_banned
 FROM users
 WHERE email = $1
 `
 
-type GetUserByEmailRow struct {
-	ID             uuid.UUID
-	Email          string
-	RegNo          string
-	Password       string
-	Role           string
-	RoundQualified int32
-	Score          pgtype.Int4
-	Name           string
-}
-
-func (q *Queries) GetUserByEmail(ctx context.Context, email string) (GetUserByEmailRow, error) {
+func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error) {
 	row := q.db.QueryRow(ctx, getUserByEmail, email)
-	var i GetUserByEmailRow
+	var i User
 	err := row.Scan(
 		&i.ID,
 		&i.Email,
@@ -141,32 +119,20 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (GetUserByEm
 		&i.RoundQualified,
 		&i.Score,
 		&i.Name,
+		&i.IsBanned,
 	)
 	return i, err
 }
 
 const getUserById = `-- name: GetUserById :one
-SELECT id, email, reg_no, password, role, round_qualified, score, name
+SELECT id, email, reg_no, password, role, round_qualified, score, name, is_banned
 FROM users
 WHERE id = $1
 `
 
-type GetUserByIdRow struct {
-	ID             uuid.UUID
-	Email          string
-	RegNo          string
-	Password       string
-	Role           string
-	RoundQualified int32
-	Score          pgtype.Int4
-	Name           string
-	IsBanned       bool
-
-}
-
-func (q *Queries) GetUserById(ctx context.Context, id uuid.UUID) (GetUserByIdRow, error) {
+func (q *Queries) GetUserById(ctx context.Context, id uuid.UUID) (User, error) {
 	row := q.db.QueryRow(ctx, getUserById, id)
-	var i GetUserByIdRow
+	var i User
 	err := row.Scan(
 		&i.ID,
 		&i.Email,
@@ -176,30 +142,20 @@ func (q *Queries) GetUserById(ctx context.Context, id uuid.UUID) (GetUserByIdRow
 		&i.RoundQualified,
 		&i.Score,
 		&i.Name,
+		&i.IsBanned,
 	)
 	return i, err
 }
 
 const getUserByUsername = `-- name: GetUserByUsername :one
-SELECT id, email, reg_no, password, role, round_qualified, score, name
+SELECT id, email, reg_no, password, role, round_qualified, score, name, is_banned
 FROM users
 WHERE name = $1
 `
 
-type GetUserByUsernameRow struct {
-	ID             uuid.UUID
-	Email          string
-	RegNo          string
-	Password       string
-	Role           string
-	RoundQualified int32
-	Score          pgtype.Int4
-	Name           string
-}
-
-func (q *Queries) GetUserByUsername(ctx context.Context, name string) (GetUserByUsernameRow, error) {
+func (q *Queries) GetUserByUsername(ctx context.Context, name string) (User, error) {
 	row := q.db.QueryRow(ctx, getUserByUsername, name)
-	var i GetUserByUsernameRow
+	var i User
 	err := row.Scan(
 		&i.ID,
 		&i.Email,
@@ -209,6 +165,7 @@ func (q *Queries) GetUserByUsername(ctx context.Context, name string) (GetUserBy
 		&i.RoundQualified,
 		&i.Score,
 		&i.Name,
+		&i.IsBanned,
 	)
 	return i, err
 }
@@ -218,22 +175,8 @@ UPDATE users
 SET is_banned = FALSE
 WHERE id = $1
 `
+
 func (q *Queries) UnbanUser(ctx context.Context, id uuid.UUID) error {
 	_, err := q.db.Exec(ctx, unbanUser, id)
 	return err
-}
-
-const upgradeUserToRound = `-- name: UpgradeUserToRound :exec
-UPDATE users
-SET round_qualified = GREATEST(round_qualified, $2)
-WHERE id = ANY($1::uuid[])
-`
-
-type UpgradeUserToRoundParams struct {
-    UserIDs        []uuid.UUID 
-    RoundQualified int32       
-}
-func (q *Queries) UpgradeUserToRound(ctx context.Context, arg UpgradeUserToRoundParams) error {
-    _, err := q.db.Exec(ctx, upgradeUserToRound, arg.UserIDs, arg.RoundQualified)
-    return err
 }

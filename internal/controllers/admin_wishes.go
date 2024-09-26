@@ -1,145 +1,137 @@
 package controllers
 
 import (
-	"context"
 	"net/http"
-	"encoding/json"
 	"log"
-    "github.com/google/uuid"
+	"github.com/google/uuid"
+	"fmt"
+	"github.com/CodeChefVIT/cookoff-backend/internal/db"
 	"github.com/CodeChefVIT/cookoff-backend/internal/helpers/database"
-	"github.com/go-chi/render"
+	httphelpers "github.com/CodeChefVIT/cookoff-backend/internal/helpers/http"
 )
 
 func GetAllUsers(w http.ResponseWriter, r *http.Request) {
-	ctx := context.Background()
+	ctx := r.Context()
 	users, err := database.Queries.GetAllUsers(ctx)
 	if err != nil {
-		http.Error(w, "Unable to fetch users", http.StatusInternalServerError)
+		httphelpers.WriteError(w, http.StatusInternalServerError, "Unable to fetch users")
 		return
 	}
-	render.JSON(w, r, users)
+	httphelpers.WriteJSON(w, http.StatusOK, users)
 }
 func UpgradeUserToRound(w http.ResponseWriter, r *http.Request) {
-    var requestBody map[string]interface{}
-    if err := json.NewDecoder(r.Body).Decode(&requestBody); err != nil {
-        http.Error(w, "Invalid request payload", http.StatusBadRequest)
-        return
-    }
+	var requestBody struct {
+		UserIDs []string `json:"user_ids"`
+		Round   float64  `json:"round"`
+	}
 
-    userIDsInterface, ok := requestBody["user_ids"].([]interface{})
-    if !ok || len(userIDsInterface) == 0 {
-        http.Error(w, "Invalid user_ids format", http.StatusBadRequest)
-        return
-    }
-    userIDs := make([]uuid.UUID, len(userIDsInterface))
-    for i, idStr := range userIDsInterface {
-        id, err := uuid.Parse(idStr.(string))
-        if err != nil {
-            http.Error(w, "Invalid user_id", http.StatusBadRequest)
-            return
-        }
-        userIDs[i] = id
-    }
+	if err := httphelpers.ParseJSON(r, &requestBody); err != nil {
+		httphelpers.WriteError(w, http.StatusBadRequest, "Invalid request payload")
+		return
+	}
 
-    roundFloat, ok := requestBody["round"].(float64)
-    if !ok {
-        http.Error(w, "Invalid round format", http.StatusBadRequest)
-        return
-    }
-    round := int(roundFloat)
+	if len(requestBody.UserIDs) == 0 {
+		httphelpers.WriteError(w, http.StatusBadRequest, "Invalid user_ids format")
+		return
+	}
 
-    ctx := context.Background()
-    err := database.Queries.UpgradeUserToRound(ctx, db.UpgradeUserToRoundParams{
-        Column1:        userIDs,
-        RoundQualified: int32(round),
-    })
-    if err != nil {
-        http.Error(w, "Unable to upgrade users to round", http.StatusInternalServerError)
-        return
-    }
+	var upgradeParams []db.UpgradeUsersToRoundParams
+	for _, idStr := range requestBody.UserIDs {
+		id, err := uuid.Parse(idStr)
+		if err != nil {
+			httphelpers.WriteError(w, http.StatusBadRequest, "Invalid user_id")
+			return
+		}
 
-    w.WriteHeader(http.StatusOK)
+		upgradeParams = append(upgradeParams, db.UpgradeUsersToRoundParams{
+			ID:         id,
+			RoundQualified: int32(requestBody.Round),
+		})
+	}
+
+	ctx := r.Context()
+	err := database.Queries.UpgradeUsersToRound(ctx, upgradeParams)
+	if err != nil {
+		httphelpers.WriteError(w, http.StatusInternalServerError, "Unable to upgrade users to round")
+		return
+	}
+
+	httphelpers.WriteJSON(w, http.StatusOK, map[string]string{"message": "Users upgraded successfully"})
 }
+
 func BanUser(w http.ResponseWriter, r *http.Request) {
-    var requestBody map[string]string
-    if err := json.NewDecoder(r.Body).Decode(&requestBody); err != nil {
-        http.Error(w, "Invalid request payload", http.StatusBadRequest)
-        return
-    }
+	var requestBody map[string]string
+	if err := httphelpers.ParseJSON(r, &requestBody); err != nil {
+		httphelpers.WriteError(w, http.StatusBadRequest, "Invalid request payload")
+		return
+	}
 
     userIDStr, ok := requestBody["user_id"]
     if !ok {
-        http.Error(w, "user_id not provided", http.StatusBadRequest)
-        return
+    httphelpers.WriteError(w, http.StatusBadRequest, "user_id must be a string")
+    return
     }
 
-    userID, err := uuid.Parse(userIDStr)
-    if err != nil {
-        http.Error(w, "Invalid user_id", http.StatusBadRequest)
-        return
-    }
+	userID, err := uuid.Parse(userIDStr)
+	if err != nil {
+		httphelpers.WriteError(w, http.StatusBadRequest, "Invalid user_id")
+		return
+	}
 
-    ctx := context.Background()
-    err = database.Queries.BanUser(ctx, userID)
-    if err != nil {
-        http.Error(w, "Unable to ban user", http.StatusInternalServerError)
-        return
-    }
+	ctx := r.Context()
+	err = database.Queries.BanUser(ctx, userID)
+	if err != nil {
+		httphelpers.WriteError(w, http.StatusInternalServerError, "Unable to ban user")
+		return
+	}
 
-    w.WriteHeader(http.StatusOK)
+	httphelpers.WriteJSON(w, http.StatusOK, map[string]string{"message": "User banned successfully"})
 }
 func UnbanUser(w http.ResponseWriter, r *http.Request) {
-    var requestBody map[string]string
-    if err := json.NewDecoder(r.Body).Decode(&requestBody); err != nil {
-        http.Error(w, "Invalid request payload", http.StatusBadRequest)
-        return
-    }
+	var requestBody map[string]string
+	if err := httphelpers.ParseJSON(r, &requestBody); err != nil {
+		httphelpers.WriteError(w, http.StatusBadRequest, "Invalid request payload")
+		return
+	}
 
-    userIDStr, ok := requestBody["user_id"]
+	userIDStr, ok := requestBody["user_id"]
     if !ok {
-        http.Error(w, "user_id not provided", http.StatusBadRequest)
-        return
+    httphelpers.WriteError(w, http.StatusBadRequest, "user_id must be a string")
+    return
     }
 
-    userID, err := uuid.Parse(userIDStr)
-    if err != nil {
-        http.Error(w, "Invalid user_id", http.StatusBadRequest)
-        return
-    }
+	userID, err := uuid.Parse(userIDStr)
+	if err != nil {
+		httphelpers.WriteError(w, http.StatusBadRequest, "Invalid user_id")
+		return
+	}
 
-    ctx := context.Background()
-    err = database.Queries.UnbanUser(ctx, userID)
-    if err != nil {
-        http.Error(w, "Unable to unban user", http.StatusInternalServerError)
-        return
-    }
+	ctx := r.Context()
+	err = database.Queries.UnbanUser(ctx, userID)
+	if err != nil {
+		httphelpers.WriteError(w, http.StatusInternalServerError, "Unable to unban user")
+		return
+	}
 
-    w.WriteHeader(http.StatusOK)
+	httphelpers.WriteJSON(w, http.StatusOK, map[string]string{"message": "User unbanned successfully"})
 }
 type RoundRequest struct {
-    RoundID string `json:"round_id"`
-    Enabled bool   `json:"enabled"`
+	RoundID int `json:"round_id"`
 }
 func SetRoundStatus(w http.ResponseWriter, r *http.Request) {
     var reqBody RoundRequest
-    if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
-        http.Error(w, "Invalid request payload", http.StatusBadRequest)
+    if err := httphelpers.ParseJSON(r, &reqBody); err != nil {
+        httphelpers.WriteError(w, http.StatusBadRequest, "Invalid request payload")
         return
     }
-
-    ctx := context.Background()
-    status := "disabled"
-    if reqBody.Enabled {
-        status = "enabled"
-    }
-
-    err := RedisClient.Set(ctx, reqBody.RoundID, status, 0).Err()
+    ctx := r.Context()
+    redisKey := "round:enabled"
+    roundIDStr := fmt.Sprintf("%d", reqBody.RoundID)
+    err := database.RedisClient.Set(ctx, redisKey, roundIDStr, 0).Err()
     if err != nil {
-        log.Printf("Failed to update round status: %v\n", err)
-        http.Error(w, "Failed to update round status", http.StatusInternalServerError)
+        log.Printf("Failed to enable round: %v\n", err)
+        httphelpers.WriteError(w, http.StatusInternalServerError, "Failed to enable round")
         return
     }
-
-    w.WriteHeader(http.StatusOK)
-    w.Write([]byte("Round status updated successfully"))
+    httphelpers.WriteJSON(w, http.StatusOK, map[string]string{"message": "Round enabled successfully"})
 }
