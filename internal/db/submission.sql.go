@@ -62,6 +62,9 @@ SELECT
     question_id,
     testcases_passed,
     testcases_failed,
+    runtime,
+    memory,
+    submission_time,
     description,
     user_id
 FROM submissions
@@ -73,6 +76,9 @@ type GetSubmissionByIDRow struct {
 	QuestionID      uuid.UUID
 	TestcasesPassed pgtype.Int4
 	TestcasesFailed pgtype.Int4
+	Runtime         pgtype.Numeric
+	Memory          pgtype.Numeric
+	SubmissionTime  pgtype.Timestamp
 	Description     *string
 	UserID          uuid.NullUUID
 }
@@ -85,10 +91,56 @@ func (q *Queries) GetSubmissionByID(ctx context.Context, id uuid.UUID) (GetSubmi
 		&i.QuestionID,
 		&i.TestcasesPassed,
 		&i.TestcasesFailed,
+		&i.Runtime,
+		&i.Memory,
+		&i.SubmissionTime,
 		&i.Description,
 		&i.UserID,
 	)
 	return i, err
+}
+
+const getSubmissionResultsBySubmissionID = `-- name: GetSubmissionResultsBySubmissionID :many
+SELECT 
+    id,
+    testcase_id,
+    submission_id,
+    runtime,
+    memory,
+    status,
+    description
+FROM 
+    submission_results
+WHERE 
+    submission_id = $1
+`
+
+func (q *Queries) GetSubmissionResultsBySubmissionID(ctx context.Context, submissionID uuid.UUID) ([]SubmissionResult, error) {
+	rows, err := q.db.Query(ctx, getSubmissionResultsBySubmissionID, submissionID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []SubmissionResult
+	for rows.Next() {
+		var i SubmissionResult
+		if err := rows.Scan(
+			&i.ID,
+			&i.TestcaseID,
+			&i.SubmissionID,
+			&i.Runtime,
+			&i.Memory,
+			&i.Status,
+			&i.Description,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const getSubmissionStatusByID = `-- name: GetSubmissionStatusByID :one

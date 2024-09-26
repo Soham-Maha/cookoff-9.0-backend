@@ -44,6 +44,9 @@ SELECT
     question_id,
     testcases_passed,
     testcases_failed,
+    runtime,
+    memory,
+    submission_time,
     description,
     user_id
 FROM submissions
@@ -54,3 +57,17 @@ SELECT
     status
 FROM submissions
 WHERE id = $1;
+
+-- name: GetSubmissionResultsBySubmissionID :many
+SELECT 
+    id,
+    testcase_id,
+    submission_id,
+    runtime,
+    memory,
+    status,
+    description
+FROM 
+    submission_results
+WHERE 
+    submission_id = $1;

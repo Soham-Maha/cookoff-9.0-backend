@@ -40,12 +40,24 @@ type Status struct {
 	Description string      `json:"description"`
 }
 
+type tc_result struct {
+	ID          string  `json:"testcase_id"`
+	Runtime     float64 `json:"runtime"`
+	Memory      float64 `json:"memory"`
+	Status      string  `json:"status"`
+	Description string  `json:"description"`
+}
+
 type resultresp struct {
-	ID          string `json:"submission_id"`
-	QuestionID  string `json:"question_id"`
-	Passed      int    `json:"testcases_passed"`
-	Failed      int    `json:"testcases_failed"`
-	Description string `json:"description"`
+	ID             string      `json:"submission_id"`
+	QuestionID     string      `json:"question_id"`
+	Passed         int         `json:"testcases_passed"`
+	Failed         int         `json:"testcases_failed"`
+	Runtime        float64     `json:"submission_runtime"`
+	Memory         float64     `json:"submission_memory"`
+	SubmissionTime string      `json:"submission_time"`
+	Description    string      `json:"description"`
+	Testcases      []tc_result `json:"testcases"`
 }
 
 func B64(data string) string {

@@ -39,9 +39,11 @@ type Submission struct {
 
 type SubmissionResult struct {
 	ID           uuid.UUID
+	TestcaseID   uuid.NullUUID
 	SubmissionID uuid.UUID
 	Runtime      pgtype.Numeric
 	Memory       pgtype.Numeric
+	Status       string
 	Description  *string
 }
 
