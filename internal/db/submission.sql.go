@@ -65,8 +65,8 @@ WHERE s.user_id = $1
 
 type GetSubmissionsWithRoundByUserIdRow struct {
 	Round           int32
-	Title           *string
-	Description     *string
+	Title           string
+	Description     string
 	ID              uuid.UUID
 	QuestionID      uuid.UUID
 	TestcasesPassed pgtype.Int4

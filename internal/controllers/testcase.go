@@ -16,17 +16,16 @@ import (
 )
 
 type createTestCaseRequest struct {
-	ExpectedOutput string  `json:"expected_output" validate:"required,omitempty"`
-	Memory         string  `json:"memory"          validate:"required,omitempty"`
-	Input          string  `json:"input"           validate:"required,omitempty"`
-	Hidden         *bool   `json:"hidden"          validate:"required,omitempty"`
-	QuestionID     string  `json:"question_id"     validate:"required,omitempty"`
-	Runtime        float64 `json:"runtime,string"  validate:"required,omitempty"`
+	ExpectedOutput string         `json:"expected_output" validate:"required,omitempty"`
+	Memory         pgtype.Numeric `json:"memory"          validate:"required,omitempty"`
+	Input          string         `json:"input"           validate:"required,omitempty"`
+	Hidden         *bool          `json:"hidden"          validate:"required,omitempty"`
+	QuestionID     string         `json:"question_id"     validate:"required,omitempty"`
+	Runtime        pgtype.Numeric `json:"runtime"         validate:"required,omitempty"`
 }
 
 func CreateTestCaseHandler(w http.ResponseWriter, r *http.Request) {
 	var testCase createTestCaseRequest
-	var runtime pgtype.Numeric
 
 	if err := httphelpers.ParseJSON(r, &testCase); err != nil {
 		httphelpers.WriteError(w, http.StatusBadRequest, "Invalid input: "+err.Error())
@@ -34,11 +33,6 @@ func CreateTestCaseHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	questionID, _ := uuid.Parse(testCase.QuestionID)
-	err := runtime.Scan(testCase.Runtime)
-	if err != nil {
-		httphelpers.WriteError(w, http.StatusBadRequest, err.Error())
-		return
-	}
 
 	newTestCase := db.CreateTestCaseParams{
 		ExpectedOutput: testCase.ExpectedOutput,
@@ -46,11 +40,11 @@ func CreateTestCaseHandler(w http.ResponseWriter, r *http.Request) {
 		Input:          testCase.Input,
 		Hidden:         *testCase.Hidden,
 		QuestionID:     questionID,
-		Runtime:        runtime,
+		Runtime:        testCase.Runtime,
 	}
 	newTestCase.ID, _ = uuid.NewV7()
 
-	err = database.Queries.CreateTestCase(context.Background(), newTestCase)
+	err := database.Queries.CreateTestCase(context.Background(), newTestCase)
 	if err != nil {
 		httphelpers.WriteError(w, http.StatusInternalServerError, "Failed to create test case")
 		return
@@ -129,13 +123,13 @@ func UpdateTestCaseHandler(w http.ResponseWriter, r *http.Request) {
 	if payload.ExpectedOutput != "" {
 		updateData.ExpectedOutput = payload.ExpectedOutput
 	}
-	if payload.Memory != "" {
+	if payload.Memory.Valid {
 		updateData.Memory = payload.Memory
 	}
 	if payload.Input != "" {
 		updateData.Input = payload.Input
 	}
-	if payload.Runtime != 0.00 {
+	if payload.Runtime.Valid {
 		_ = x.Scan(payload.Runtime)
 		updateData.Runtime = x
 	}

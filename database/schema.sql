@@ -12,13 +12,16 @@ CREATE TABLE users (
 
 CREATE TABLE questions (
 	id UUID NOT NULL UNIQUE,
-	description TEXT,
-	title TEXT,
-	input_format TEXT,
-	points INTEGER,
+	description TEXT NOT NULL,
+	title TEXT NOT NULL,
+	input_format TEXT[],
+	points INTEGER NOT NULL,
 	round INTEGER NOT NULL,
-	constraints TEXT,
-	output_format TEXT,
+	constraints TEXT[] NOT NULL,
+	output_format TEXT[] NOT NULL,
+    sample_test_input TEXT[],
+    sample_test_output TEXT[],
+    explanation TEXT[],
 	PRIMARY KEY(id)
 );
 
@@ -40,11 +43,11 @@ CREATE TABLE submissions (
 
 CREATE TABLE testcases (
 	id UUID NOT NULL UNIQUE,
-	expected_output TEXT NOT NULL UNIQUE,
-	memory TEXT NOT NULL UNIQUE,
-	input TEXT NOT NULL UNIQUE,
-	hidden BOOLEAN NOT NULL UNIQUE,
-	runtime DECIMAL NOT NULL UNIQUE,
+	expected_output TEXT NOT NULL ,
+	memory NUMERIC NOT NULL ,
+	input TEXT NOT NULL ,
+	hidden BOOLEAN NOT NULL ,
+	runtime DECIMAL NOT NULL ,
 	question_id UUID NOT NULL,
 	PRIMARY KEY(id)
 );

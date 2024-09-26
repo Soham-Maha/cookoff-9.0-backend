@@ -10,14 +10,17 @@ import (
 )
 
 type Question struct {
-	ID           uuid.UUID
-	Description  *string
-	Title        *string
-	InputFormat  *string
-	Points       pgtype.Int4
-	Round        int32
-	Constraints  *string
-	OutputFormat *string
+	ID               uuid.UUID
+	Description      string
+	Title            string
+	InputFormat      []string
+	Points           int32
+	Round            int32
+	Constraints      []string
+	OutputFormat     []string
+	SampleTestInput  []string
+	SampleTestOutput []string
+	Explanation      []string
 }
 
 type Submission struct {
@@ -38,7 +41,7 @@ type Submission struct {
 type Testcase struct {
 	ID             uuid.UUID
 	ExpectedOutput string
-	Memory         string
+	Memory         pgtype.Numeric
 	Input          string
 	Hidden         bool
 	Runtime        pgtype.Numeric
