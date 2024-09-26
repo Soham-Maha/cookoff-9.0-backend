@@ -132,11 +132,6 @@ func UpdateTestCaseHandler(w http.ResponseWriter, r *http.Request) {
 		updateData.Runtime = payload.Runtime
 	}
 
-	if err := httphelpers.ParseJSON(r, &updateData); err != nil {
-		httphelpers.WriteError(w, http.StatusBadRequest, "Invalid input: "+err.Error())
-		return
-	}
-
 	updateData.ID = testcaseID
 
 	err = database.Queries.UpdateTestCase(context.Background(), updateData)
