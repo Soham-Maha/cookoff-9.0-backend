@@ -13,6 +13,16 @@ UPDATE submissions
 SET testcases_passed = $1, testcases_failed = $2, runtime = $3, memory = $4
 WHERE id = $5;
 
+-- name: UpdateSubmissionStatus :exec
+UPDATE submissions
+SET status = $1
+WHERE id = $2;
+
+-- name: UpdateDescriptionStatus :exec
+UPDATE submissions
+SET description = $1
+WHERE id = $2;
+
 -- name: GetSubmission :one
 SELECT 
     testcases_passed, 

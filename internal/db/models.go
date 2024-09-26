@@ -30,12 +30,19 @@ type Submission struct {
 	TestcasesFailed pgtype.Int4
 	Runtime         pgtype.Numeric
 	SubmissionTime  pgtype.Timestamp
-	TestcaseID      uuid.NullUUID
 	LanguageID      int32
 	Description     *string
-	Memory          pgtype.Int4
+	Memory          pgtype.Numeric
 	UserID          uuid.NullUUID
 	Status          *string
+}
+
+type SubmissionResult struct {
+	ID           uuid.UUID
+	SubmissionID uuid.UUID
+	Runtime      pgtype.Numeric
+	Memory       pgtype.Numeric
+	Description  *string
 }
 
 type Testcase struct {
