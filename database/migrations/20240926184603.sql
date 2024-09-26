@@ -1,5 +1,5 @@
 -- Create "questions" table
-CREATE TABLE "public"."questions" ("id" uuid NOT NULL, "description" text NOT NULL, "title" text NOT NULL, "input_format" text[] NOT NULL, "points" integer NOT NULL, "round" integer NOT NULL, "constraints" text[] NOT NULL, "output_format" text[] NOT NULL, "sample_test_input" text[] NULL, "sample_test_output" text[] NULL, "explanation" text[] NULL, PRIMARY KEY ("id"));
+CREATE TABLE "public"."questions" ("id" uuid NOT NULL, "description" text NOT NULL, "title" text NOT NULL, "input_format" text[] NULL, "points" integer NOT NULL, "round" integer NOT NULL, "constraints" text[] NOT NULL, "output_format" text[] NOT NULL, "sample_test_input" text[] NULL, "sample_test_output" text[] NULL, "explanation" text[] NULL, PRIMARY KEY ("id"));
 -- Create "testcases" table
 CREATE TABLE "public"."testcases" ("id" uuid NOT NULL, "expected_output" text NOT NULL, "memory" numeric NOT NULL, "input" text NOT NULL, "hidden" boolean NOT NULL, "runtime" numeric NOT NULL, "question_id" uuid NOT NULL, PRIMARY KEY ("id"), CONSTRAINT "testcases_question_id_fkey" FOREIGN KEY ("question_id") REFERENCES "public"."questions" ("id") ON UPDATE NO ACTION ON DELETE CASCADE);
 -- Create "users" table
