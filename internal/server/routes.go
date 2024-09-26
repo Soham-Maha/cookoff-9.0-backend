@@ -26,6 +26,7 @@ func (s *Server) RegisterRoutes(taskClient *asynq.Client) http.Handler {
 
 	r.Post("/login/user", controllers.LoginHandler)
 	r.Post("/token/refresh", controllers.RefreshTokenHandler)
+	r.Post("/logout", controllers.Logout)
 
 	r.Group(func(protected chi.Router) {
 		protected.Use(jwtauth.Verifier(auth.TokenAuth))
