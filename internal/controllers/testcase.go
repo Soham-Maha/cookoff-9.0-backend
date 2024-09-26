@@ -85,7 +85,6 @@ func GetAllTestCasesHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func UpdateTestCaseHandler(w http.ResponseWriter, r *http.Request) {
-	var x pgtype.Numeric
 	testcaseID, err := uuid.Parse(chi.URLParam(r, "testcase_id"))
 	if err != nil {
 		httphelpers.WriteError(w, http.StatusBadRequest, "Invalid test case ID")
@@ -130,8 +129,7 @@ func UpdateTestCaseHandler(w http.ResponseWriter, r *http.Request) {
 		updateData.Input = payload.Input
 	}
 	if payload.Runtime.Valid {
-		_ = x.Scan(payload.Runtime)
-		updateData.Runtime = x
+		updateData.Runtime = payload.Runtime
 	}
 
 	if err := httphelpers.ParseJSON(r, &updateData); err != nil {
