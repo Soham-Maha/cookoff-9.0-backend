@@ -13,13 +13,15 @@ import (
 )
 
 const createSubmissionStatus = `-- name: CreateSubmissionStatus :exec
-INSERT INTO submission_results (id, submission_id, runtime, memory, description)
-VALUES ($1, $2, $3, $4, $5)
+INSERT INTO submission_results (id, submission_id, testcase_id ,status ,runtime, memory, description)
+VALUES ($1, $2, $3, $4, $5, $6, $7)
 `
 
 type CreateSubmissionStatusParams struct {
 	ID           uuid.UUID
 	SubmissionID uuid.UUID
+	TestcaseID   uuid.NullUUID
+	Status       string
 	Runtime      pgtype.Numeric
 	Memory       pgtype.Numeric
 	Description  *string
@@ -29,6 +31,8 @@ func (q *Queries) CreateSubmissionStatus(ctx context.Context, arg CreateSubmissi
 	_, err := q.db.Exec(ctx, createSubmissionStatus,
 		arg.ID,
 		arg.SubmissionID,
+		arg.TestcaseID,
+		arg.Status,
 		arg.Runtime,
 		arg.Memory,
 		arg.Description,

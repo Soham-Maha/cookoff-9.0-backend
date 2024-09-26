@@ -17,8 +17,8 @@ func Init(client *redis.Client) {
 	Tokens = &TokenManager{client: client}
 }
 
-func (tm *TokenManager) AddToken(ctx context.Context, token string, subID string) error {
-	err := tm.client.Set(ctx, fmt.Sprintf("token:%s", token), subID, 0).Err()
+func (tm *TokenManager) AddToken(ctx context.Context, token string, subID string, testcaseid string) error {
+	err := tm.client.Set(ctx, fmt.Sprintf("token:%s", token), fmt.Sprintf("%s:%s", subID, testcaseid), 0).Err()
 	if err != nil {
 		return err
 	}
@@ -49,7 +49,7 @@ func (tm *TokenManager) GetTokenCount(ctx context.Context, subID string) (int64,
 }
 
 func (tm *TokenManager) DeleteToken(ctx context.Context, token string) error {
-	subID, err := tm.GetSubID(ctx, token)
+	subID, _, err := GetSubID(ctx, token)
 	if err != nil {
 		return err
 	}

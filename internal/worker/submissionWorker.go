@@ -3,6 +3,7 @@ package worker
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"log"
 	"math/big"
 	"strconv"
@@ -41,13 +42,18 @@ func ProcessSubmissionTask(ctx context.Context, t *asynq.Task) error {
 		return err
 	}
 
-	value, err := submission.GetSubID(ctx, data.Token)
+	value, testcase, err := submission.GetSubID(ctx, data.Token)
 	if err != nil {
 		log.Println("Error getting submission ID from token: ", err)
 		return err
 	}
 
 	idUUID, err := uuid.Parse(value)
+	if err != nil {
+		log.Fatalf("Error parsing UUID: %v", err)
+	}
+
+	testidUUID, err := uuid.Parse(testcase)
 	if err != nil {
 		log.Fatalf("Error parsing UUID: %v", err)
 	}
@@ -64,12 +70,16 @@ func ProcessSubmissionTask(ctx context.Context, t *asynq.Task) error {
 	switch data.Status.ID {
 	case "3":
 		testcasesPassed++
+		err = handleCompilationError(ctx, idUUID, data, int(timeValue), testidUUID, "success")
 	case "4":
 		testcasesFailed++
+		err = handleCompilationError(ctx, idUUID, data, int(timeValue), testidUUID, "wrong answer")
 	case "6":
-		err = handleCompilationError(ctx, idUUID, data)
+		testcasesFailed++
+		err = handleCompilationError(ctx, idUUID, data, int(timeValue), testidUUID, "Compilation error")
 	case "11":
-		err = handleRuntimeError(ctx, idUUID)
+		testcasesFailed++
+		err = handleCompilationError(ctx, idUUID, data, int(timeValue), testidUUID, "Runtime error")
 	}
 
 	if err != nil {
@@ -92,8 +102,10 @@ func ProcessSubmissionTask(ctx context.Context, t *asynq.Task) error {
 		return err
 	}
 
+	fmt.Println("Token :- ", tokenCount)
+
 	if tokenCount == 0 {
-		err = finalizeSubmission(ctx, idUUID)
+		err = FinalizeSubmission(ctx, idUUID)
 		if err != nil {
 			return err
 		}
@@ -115,16 +127,8 @@ func parseTime(timeStr string) (float64, error) {
 	return timeValue, nil
 }
 
-func handleCompilationError(ctx context.Context, idUUID uuid.UUID, data controllers.Data) error {
+func handleCompilationError(ctx context.Context, idUUID uuid.UUID, data controllers.Data, time int, testcase uuid.UUID, status string) error {
 	subID, err := uuid.NewV7()
-	log.Printf("Compilation error for submission %v\n", idUUID)
-	err = database.Queries.UpdateSubmission(ctx, db.UpdateSubmissionParams{
-		TestcasesPassed: pgtype.Int4{Int32: int32(0), Valid: true},
-		TestcasesFailed: pgtype.Int4{Int32: int32(0), Valid: true},
-		Runtime:         pgtype.Numeric{Int: big.NewInt(0), Valid: true},
-		Memory:          pgtype.Numeric{Int: big.NewInt(0), Valid: true},
-		ID:              idUUID,
-	})
 
 	if err != nil {
 		log.Println("Error updating submission for compilation error: ", err)
@@ -134,36 +138,15 @@ func handleCompilationError(ctx context.Context, idUUID uuid.UUID, data controll
 	err = database.Queries.CreateSubmissionStatus(ctx, db.CreateSubmissionStatusParams{
 		ID:           subID,
 		SubmissionID: idUUID,
-		Runtime:      pgtype.Numeric{Int: big.NewInt(0), Valid: true},
-		Memory:       pgtype.Numeric{Int: big.NewInt(0), Valid: true},
+		TestcaseID:   uuid.NullUUID{UUID: testcase, Valid: true},
+		Runtime:      pgtype.Numeric{Int: big.NewInt(int64(time)), Valid: true},
+		Memory:       pgtype.Numeric{Int: big.NewInt(int64(data.Memory)), Valid: true},
 		Description:  &data.Status.Description,
-	})
-	return nil
-}
-
-func handleRuntimeError(ctx context.Context, idUUID uuid.UUID) error {
-	log.Printf("Runtime error for submission %v\n", idUUID)
-	err := database.Queries.UpdateSubmission(ctx, db.UpdateSubmissionParams{
-		TestcasesPassed: pgtype.Int4{Int32: int32(0), Valid: true},
-		TestcasesFailed: pgtype.Int4{Int32: int32(0), Valid: true},
-		Runtime:         pgtype.Numeric{Int: big.NewInt(0), Valid: true},
-		Memory:          pgtype.Numeric{Int: big.NewInt(0), Valid: true},
-		ID:              idUUID,
+		Status:       status,
 	})
 
 	if err != nil {
-		log.Println("Error updating submission for runtime error: ", err)
-		return err
-	}
-
-	notAcceptedStatus := "NOT ACCEPTED"
-	err = database.Queries.UpdateDescriptionStatus(ctx, db.UpdateDescriptionStatusParams{
-		Description: &notAcceptedStatus,
-		ID:          idUUID,
-	})
-
-	if err != nil {
-		log.Println("Error updating submission status to 'Not Accepted': ", err)
+		log.Println("Error creating submission status error: ", err)
 		return err
 	}
 	return nil
@@ -187,7 +170,7 @@ func updateSubmission(ctx context.Context, idUUID uuid.UUID, testcasesPassed, te
 	return nil
 }
 
-func finalizeSubmission(ctx context.Context, idUUID uuid.UUID) error {
+func FinalizeSubmission(ctx context.Context, idUUID uuid.UUID) error {
 	status := SubmissionDoneStatus
 	err := database.Queries.UpdateSubmissionStatus(ctx, db.UpdateSubmissionStatusParams{
 		Status: &status,

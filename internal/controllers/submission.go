@@ -68,7 +68,7 @@ func SubmitCode(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	payload, err := submission.CreateSubmission(ctx, question_id, req.LanguageID, req.SourceCode)
+	payload, testcase_id, err := submission.CreateSubmission(ctx, question_id, req.LanguageID, req.SourceCode)
 	if err != nil {
 		httphelpers.WriteError(
 			w,
@@ -133,7 +133,7 @@ func SubmitCode(w http.ResponseWriter, r *http.Request) {
 		httphelpers.WriteError(w, http.StatusInternalServerError, "Internal server error!")
 		return
 	}
-	err = submission.StoreTokens(ctx, subID, respBytes)
+	err = submission.StoreTokens(ctx, subID, respBytes, testcase_id)
 	if err != nil {
 		logger.Errof("Error storing tokens for submission ID %s: %v", subID, err)
 		httphelpers.WriteError(
