@@ -31,20 +31,23 @@ func MeHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	submissions, err := database.Queries.GetSubmissionsWithRoundByUserId(r.Context(), uuid.NullUUID{UUID: id, Valid: true})
+	submissions, err := database.Queries.GetSubmissionsWithRoundByUserId(
+		r.Context(),
+		uuid.NullUUID{UUID: id, Valid: true},
+	)
 	if err != nil {
 		logger.Errof("Failed to get submissions: %v", err)
 		httphelpers.WriteError(w, http.StatusInternalServerError, "Failed to get submissions")
 		return
 	}
 
-	var submissionsByRound = make(map[string][]DashboardSubmission)
+	submissionsByRound := make(map[string][]DashboardSubmission)
 
 	for _, submission := range submissions {
 		round := fmt.Sprint(submission.Round)
 		submissionsByRound[round] = append(submissionsByRound[round], DashboardSubmission{
-			Title:       *submission.Title,
-			Description: *submission.Description,
+			Title:       submission.Title,
+			Description: submission.Description,
 			Score:       0,
 		})
 	}
