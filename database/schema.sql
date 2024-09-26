@@ -14,7 +14,7 @@ CREATE TABLE questions (
 	id UUID NOT NULL UNIQUE,
 	description TEXT NOT NULL,
 	title TEXT NOT NULL,
-	input_format TEXT[],
+	input_format TEXT[] NOT NULL,
 	points INTEGER NOT NULL,
 	round INTEGER NOT NULL,
 	constraints TEXT[] NOT NULL,

@@ -1,9 +1,7 @@
-# Simple Makefile for a Go project
-
-# Build the application
+include .env
 all: build
 
-DB_URL=postgres://username:password@localhost:5432/database_name?sslmode=disable
+DB_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@localhost:5432/${POSTGRES_DB}?sslmode=disable
 DEV_URL=docker://postgres/15/dev
 SCHEMA_FILE=file://database/schema.sql
 MIGRATIONS_DIR=file://database/migrations
@@ -56,14 +54,11 @@ generate:
 
 apply-schema:
 	@echo "Applying schema to database..."
-	atlas schema apply \
-		--url "$(DB_URL)" \
-		--to "$(SCHEMA_FILE)" \
-		--dev-url "$(DEV_URL)"
+	atlas schema apply --dir "$(MIGRATIONS_DIR)" --url "$(DB_URL)"
 
 migrate:
 	@echo "Generating migration diff..."
-	atlas migrate diff cookoff_backend \
+	atlas migrate diff $(name) \
 		--dir "$(MIGRATIONS_DIR)" \
 		--to "$(SCHEMA_FILE)" \
 		--dev-url "$(DEV_URL)"
