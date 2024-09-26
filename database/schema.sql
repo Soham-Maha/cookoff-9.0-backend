@@ -32,13 +32,24 @@ CREATE TABLE submissions (
 	testcases_failed INTEGER DEFAULT 0,
 	runtime DECIMAL,
 	submission_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-	testcase_id UUID,
 	language_id INTEGER NOT NULL,
 	description TEXT,
-	memory INTEGER,
+	memory NUMERIC,
 	user_id UUID,
 	status TEXT,
 	PRIMARY KEY(id)
+);
+
+
+CREATE TABLE submission_results (
+    id UUID NOT NULL UNIQUE,
+    submission_id UUID NOT NULL,
+    runtime DECIMAL NOT NULL,
+    memory NUMERIC NOT NULL,
+    description TEXT,
+    PRIMARY KEY(id),
+    FOREIGN KEY(submission_id) REFERENCES submissions(id)
+    ON UPDATE NO ACTION ON DELETE CASCADE
 );
 
 CREATE TABLE testcases (
@@ -52,6 +63,8 @@ CREATE TABLE testcases (
 	PRIMARY KEY(id)
 );
 
+
+
 -- Foreign keys
 ALTER TABLE submissions
 ADD FOREIGN KEY(question_id) REFERENCES questions(id)
@@ -61,10 +74,16 @@ ALTER TABLE testcases
 ADD FOREIGN KEY(question_id) REFERENCES questions(id)
 ON UPDATE NO ACTION ON DELETE CASCADE;
 
-ALTER TABLE submissions
-ADD FOREIGN KEY(testcase_id) REFERENCES testcases(id)
-ON UPDATE NO ACTION ON DELETE CASCADE;
+
 
 ALTER TABLE submissions
 ADD FOREIGN KEY(user_id) REFERENCES users(id)
 ON UPDATE NO ACTION ON DELETE CASCADE;
+
+
+
+
+
+
+
+

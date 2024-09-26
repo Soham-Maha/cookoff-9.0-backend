@@ -57,7 +57,7 @@ func (q *Queries) GetSubmission(ctx context.Context, id uuid.UUID) (GetSubmissio
 }
 
 const getSubmissionsWithRoundByUserId = `-- name: GetSubmissionsWithRoundByUserId :many
-SELECT q.round, q.title, q.description, s.id, s.question_id, s.testcases_passed, s.testcases_failed, s.runtime, s.submission_time, s.testcase_id, s.language_id, s.description, s.memory, s.user_id, s.status
+SELECT q.round, q.title, q.description, s.id, s.question_id, s.testcases_passed, s.testcases_failed, s.runtime, s.submission_time, s.language_id, s.description, s.memory, s.user_id, s.status
 FROM submissions s
 INNER JOIN questions q ON s.question_id = q.id
 WHERE s.user_id = $1
@@ -73,10 +73,9 @@ type GetSubmissionsWithRoundByUserIdRow struct {
 	TestcasesFailed pgtype.Int4
 	Runtime         pgtype.Numeric
 	SubmissionTime  pgtype.Timestamp
-	TestcaseID      uuid.NullUUID
 	LanguageID      int32
 	Description_2   *string
-	Memory          pgtype.Int4
+	Memory          pgtype.Numeric
 	UserID          uuid.NullUUID
 	Status          *string
 }
@@ -100,7 +99,6 @@ func (q *Queries) GetSubmissionsWithRoundByUserId(ctx context.Context, userID uu
 			&i.TestcasesFailed,
 			&i.Runtime,
 			&i.SubmissionTime,
-			&i.TestcaseID,
 			&i.LanguageID,
 			&i.Description_2,
 			&i.Memory,
@@ -157,6 +155,22 @@ func (q *Queries) GetTestCases(ctx context.Context, arg GetTestCasesParams) ([]T
 	return items, nil
 }
 
+const updateDescriptionStatus = `-- name: UpdateDescriptionStatus :exec
+UPDATE submissions
+SET description = $1
+WHERE id = $2
+`
+
+type UpdateDescriptionStatusParams struct {
+	Description *string
+	ID          uuid.UUID
+}
+
+func (q *Queries) UpdateDescriptionStatus(ctx context.Context, arg UpdateDescriptionStatusParams) error {
+	_, err := q.db.Exec(ctx, updateDescriptionStatus, arg.Description, arg.ID)
+	return err
+}
+
 const updateSubmission = `-- name: UpdateSubmission :exec
 UPDATE submissions
 SET testcases_passed = $1, testcases_failed = $2, runtime = $3, memory = $4
@@ -167,7 +181,7 @@ type UpdateSubmissionParams struct {
 	TestcasesPassed pgtype.Int4
 	TestcasesFailed pgtype.Int4
 	Runtime         pgtype.Numeric
-	Memory          pgtype.Int4
+	Memory          pgtype.Numeric
 	ID              uuid.UUID
 }
 
@@ -179,5 +193,21 @@ func (q *Queries) UpdateSubmission(ctx context.Context, arg UpdateSubmissionPara
 		arg.Memory,
 		arg.ID,
 	)
+	return err
+}
+
+const updateSubmissionStatus = `-- name: UpdateSubmissionStatus :exec
+UPDATE submissions
+SET status = $1
+WHERE id = $2
+`
+
+type UpdateSubmissionStatusParams struct {
+	Status *string
+	ID     uuid.UUID
+}
+
+func (q *Queries) UpdateSubmissionStatus(ctx context.Context, arg UpdateSubmissionStatusParams) error {
+	_, err := q.db.Exec(ctx, updateSubmissionStatus, arg.Status, arg.ID)
 	return err
 }
