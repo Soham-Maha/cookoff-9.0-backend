@@ -20,7 +20,7 @@ func CheckStatus(ctx context.Context, subid uuid.UUID) (bool, error) {
 		return false, nil
 	}
 
-	return *status == "done", nil
+	return *status == "DONE", nil
 }
 
 func GetSubResult(ctx context.Context, subid uuid.UUID) (resultresp, error) {
