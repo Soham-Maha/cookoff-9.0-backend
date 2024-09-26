@@ -43,9 +43,11 @@ CREATE TABLE submissions (
 
 CREATE TABLE submission_results (
     id UUID NOT NULL UNIQUE,
+	testcase_id UUID,
     submission_id UUID NOT NULL,
     runtime DECIMAL NOT NULL,
     memory NUMERIC NOT NULL,
+	status TEXT NOT NULL,
     description TEXT,
     PRIMARY KEY(id),
     FOREIGN KEY(submission_id) REFERENCES submissions(id)
@@ -73,8 +75,6 @@ ON UPDATE NO ACTION ON DELETE CASCADE;
 ALTER TABLE testcases
 ADD FOREIGN KEY(question_id) REFERENCES questions(id)
 ON UPDATE NO ACTION ON DELETE CASCADE;
-
-
 
 ALTER TABLE submissions
 ADD FOREIGN KEY(user_id) REFERENCES users(id)
