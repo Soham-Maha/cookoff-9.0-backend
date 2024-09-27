@@ -308,8 +308,9 @@ WITH best_submissions AS (
     SELECT 
         s.user_id,
         s.question_id,
-        MAX((s.testcases_passed)*10/(s.testcases_passed  + s.testcases_failed)) AS best_score
+        MAX((s.testcases_passed) * q.points / (s.testcases_passed + s.testcases_failed)) AS best_score
     FROM submissions s
+    JOIN questions q ON s.question_id = q.id
     WHERE s.id = $1
     GROUP BY s.user_id, s.question_id
 )
