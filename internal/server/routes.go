@@ -20,12 +20,12 @@ func (s *Server) RegisterRoutes(taskClient *asynq.Client) http.Handler {
 	r.Put("/callback", func(w http.ResponseWriter, r *http.Request) {
 		controllers.CallbackUrl(w, r, taskClient)
 	})
-	r.Get("/testcase", controllers.GetAllTestCasesHandler)
 
 	r.Post("/user/signup", controllers.SignUp)
 
 	r.Post("/login/user", controllers.LoginHandler)
 	r.Post("/token/refresh", controllers.RefreshTokenHandler)
+	r.Post("/logout", controllers.Logout)
 
 	r.Group(func(protected chi.Router) {
 		protected.Use(jwtauth.Verifier(auth.TokenAuth))
@@ -51,15 +51,11 @@ func (s *Server) RegisterRoutes(taskClient *asynq.Client) http.Handler {
 		adminRoutes.Get("/users", controllers.GetAllUsers)
 	})
 
-	r.Group(func(protected chi.Router) {
-		protected.Use(jwtauth.Verifier(auth.TokenAuth))
-		protected.Use(jwtauth.Authenticator(auth.TokenAuth))
-		protected.Use(middlewares.RoleAuthorizationMiddleware("admin"))
-
-		protected.Post("/testcase", controllers.CreateTestCaseHandler)
-		protected.Put("/testcase/{testcase_id}", controllers.UpdateTestCaseHandler)
-		protected.Delete("/testcase/{testcase_id}", controllers.DeleteTestCaseHandler)
-		protected.Get("/testcase/{testcase_id}", controllers.GetTestCaseHandler)
+		adminRoutes.Post("/testcase", controllers.CreateTestCaseHandler)
+		adminRoutes.Put("/testcase/{testcase_id}", controllers.UpdateTestCaseHandler)
+		adminRoutes.Get("/testcase/{testcase_id}", controllers.GetTestCaseHandler)
+		adminRoutes.Delete("/testcase/{testcase_id}", controllers.DeleteTestCaseHandler)
+		adminRoutes.Get("/questions/{question_id}/testcases", controllers.GetTestCaseByQuestionID)
 	})
 
 	return r

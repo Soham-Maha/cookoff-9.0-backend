@@ -17,4 +17,3 @@ func RoleFromToken(w http.ResponseWriter, r *http.Request, requiredRole string) 
 
 	return role == requiredRole
 }
-
