@@ -33,18 +33,23 @@ func (s *Server) RegisterRoutes(taskClient *asynq.Client) http.Handler {
 
 		protected.Get("/me", controllers.MeHandler)
 		protected.Get("/protected", controllers.ProtectedHandler)
-		protected.Post("/submit", controllers.SubmitCode)
-		protected.Post("/runcode", controllers.RunCode)
-		protected.Get("/result/{submission_id}", controllers.GetResult)
-		protected.Get("/question/round", controllers.GetQuestionsByRound)
+	banCheckRoutes := protected.With(middlewares.BanCheckMiddleware)
+    banCheckRoutes.Post("/submit", controllers.SubmitCode)
+    banCheckRoutes.Post("/runcode", controllers.RunCode)
+    banCheckRoutes.Get("/question/round", controllers.GetQuestionsByRound)
 
 		adminRoutes := protected.With(middlewares.RoleAuthorizationMiddleware("admin"))
-
 		adminRoutes.Post("/question/create", controllers.CreateQuestion)
 		adminRoutes.Get("/questions", controllers.GetAllQuestion)
 		adminRoutes.Get("/question/{question_id}", controllers.GetQuestionById)
 		adminRoutes.Delete("/question/{question_id}", controllers.DeleteQuestion)
 		adminRoutes.Patch("/question", controllers.UpdateQuestion)
+		adminRoutes.Post("/upgrade", controllers.UpgradeUserToRound)
+		adminRoutes.Post("/roast", controllers.BanUser)
+		adminRoutes.Post("/unroast", controllers.UnbanUser)
+		adminRoutes.Post("/round/", controllers.SetRoundStatus)
+		adminRoutes.Get("/users", controllers.GetAllUsers)
+	})
 
 		adminRoutes.Post("/testcase", controllers.CreateTestCaseHandler)
 		adminRoutes.Put("/testcase/{testcase_id}", controllers.UpdateTestCaseHandler)
