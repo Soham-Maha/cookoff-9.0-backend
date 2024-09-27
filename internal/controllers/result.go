@@ -5,14 +5,20 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
+	"math/big"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
+	"github.com/CodeChefVIT/cookoff-backend/internal/db"
+	"github.com/CodeChefVIT/cookoff-backend/internal/helpers/database"
 	httphelpers "github.com/CodeChefVIT/cookoff-backend/internal/helpers/http"
 	logger "github.com/CodeChefVIT/cookoff-backend/internal/helpers/logging"
 	"github.com/CodeChefVIT/cookoff-backend/internal/helpers/submission"
-	"github.com/CodeChefVIT/cookoff-backend/internal/helpers/validator"
+	"github.com/go-chi/chi/v5"
+	"github.com/jackc/pgx/v5/pgtype"
 
 	"github.com/google/uuid"
 )
@@ -26,17 +32,8 @@ func GetResult(w http.ResponseWriter, r *http.Request) {
 	defer cancel()
 
 	var req resultreq
-	err := httphelpers.ParseJSON(r, &req)
-	if err != nil {
-		httphelpers.WriteError(w, http.StatusBadRequest, "Invalid request payload")
-		return
-	}
 
-	if err := validator.ValidatePayload(w, req); err != nil {
-		httphelpers.WriteError(w, http.StatusNotAcceptable, "Please provide values for all required fields.")
-		return
-	}
-
+	req.SubID = chi.URLParam(r, "submission_id")
 	subid, err := uuid.Parse(req.SubID)
 	if err != nil {
 		httphelpers.WriteError(w, http.StatusBadRequest, "Invalid UUID format")
@@ -59,7 +56,7 @@ func GetResult(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ticker := time.NewTicker(20 * time.Second)
+	ticker := time.NewTicker(10 * time.Second)
 	defer ticker.Stop()
 
 	for {
@@ -184,8 +181,72 @@ func BadCodeAlert(ctx context.Context, id uuid.UUID, w http.ResponseWriter) erro
 	for _, v := range temp.Submissions {
 		if v.Status.ID != 1 || v.Status.ID != 2 {
 			submission.Tokens.DeleteToken(ctx, v.Token)
+			_, testcase, err := submission.GetSubID(ctx, v.Token)
+			if err != nil {
+				fmt.Println("Failed to get details from redis:", err)
+				httphelpers.WriteError(w, http.StatusInternalServerError, "Internal server error!(Failed to get from redis)")
+				return err
+			}
+			timeValue, err := parseTime(*v.Time)
+			if err != nil {
+				fmt.Println("Error converting to float:", err)
+				httphelpers.WriteError(w, http.StatusInternalServerError, "Internal server error!(Failed to convert to float)")
+				return err
+			}
+			tid := uuid.MustParse(testcase)
+			switch v.Status.ID {
+			case 3:
+				err = HandleCompilationError(ctx, id, v, int(timeValue*1000), tid, "success")
+			case 4:
+				err = HandleCompilationError(ctx, id, v, int(timeValue*1000), tid, "wrong answer")
+			case 6:
+				err = HandleCompilationError(ctx, id, v, int(timeValue*1000), tid, "Compilation error")
+			case 11:
+				err = HandleCompilationError(ctx, id, v, int(timeValue*1000), tid, "Runtime error")
+			}
+			if err != nil {
+				fmt.Println("Failed to add submission_results")
+			}
 		}
 	}
 
+	return nil
+}
+
+func parseTime(timeStr string) (float64, error) {
+	if timeStr == "" {
+		log.Println("Time value is empty, setting time to 0 for this submission.")
+		return 0, nil
+	}
+
+	timeValue, err := strconv.ParseFloat(timeStr, 64)
+	if err != nil {
+		return 0, err
+	}
+	return timeValue, nil
+}
+
+func HandleCompilationError(ctx context.Context, idUUID uuid.UUID, data GetSub, time int, testcase uuid.UUID, status string) error {
+	subID, err := uuid.NewV7()
+
+	if err != nil {
+		log.Println("Error updating submission for compilation error: ", err)
+		return err
+	}
+
+	err = database.Queries.CreateSubmissionStatus(ctx, db.CreateSubmissionStatusParams{
+		ID:           subID,
+		SubmissionID: idUUID,
+		TestcaseID:   uuid.NullUUID{UUID: testcase, Valid: true},
+		Runtime:      pgtype.Numeric{Int: big.NewInt(int64(time)), Valid: true},
+		Memory:       pgtype.Numeric{Int: big.NewInt(int64(*data.Memory)), Valid: true},
+		Description:  &data.Status.Description,
+		Status:       status,
+	})
+
+	if err != nil {
+		log.Println("Error creating submission status error: ", err)
+		return err
+	}
 	return nil
 }

@@ -111,7 +111,7 @@ func UpdateSubmission(ctx context.Context, idUUID uuid.UUID) error {
 	}
 
 	err = database.Queries.UpdateSubmission(ctx, db.UpdateSubmissionParams{
-		Runtime:         pgtype.Numeric{Int: big.NewInt(int64(runtime * 1000)), Valid: true},
+		Runtime:         pgtype.Numeric{Int: big.NewInt(int64(runtime)), Valid: true},
 		Memory:          pgtype.Numeric{Int: big.NewInt(int64(memory)), Valid: true},
 		Status:          &status,
 		TestcasesPassed: pgtype.Int4{Int32: int32(passed), Valid: true},

@@ -58,28 +58,28 @@ func ProcessSubmissionTask(ctx context.Context, t *asynq.Task) error {
 		log.Fatalf("Error parsing UUID: %v", err)
 	}
 
-	sub, err := database.Queries.GetSubmission(ctx, idUUID)
-	if err != nil {
-		log.Println("Error retrieving submission: ", err)
-		return err
-	}
+	//sub, err := database.Queries.GetSubmission(ctx, idUUID)
+	//if err != nil {
+	//	log.Println("Error retrieving submission: ", err)
+	//	return err
+	//}
 
-	testcasesPassed := int(sub.TestcasesPassed.Int32)
-	testcasesFailed := int(sub.TestcasesFailed.Int32)
+	//testcasesPassed := int(sub.TestcasesPassed.Int32)
+	//testcasesFailed := int(sub.TestcasesFailed.Int32)
 
 	switch data.Status.ID {
 	case "3":
-		testcasesPassed++
-		err = handleCompilationError(ctx, idUUID, data, int(timeValue), testidUUID, "success")
+		//testcasesPassed++
+		err = handleCompilationError(ctx, idUUID, data, int(timeValue*1000), testidUUID, "success")
 	case "4":
-		testcasesFailed++
-		err = handleCompilationError(ctx, idUUID, data, int(timeValue), testidUUID, "wrong answer")
+		//testcasesFailed++
+		err = handleCompilationError(ctx, idUUID, data, int(timeValue*1000), testidUUID, "wrong answer")
 	case "6":
-		testcasesFailed++
-		err = handleCompilationError(ctx, idUUID, data, int(timeValue), testidUUID, "Compilation error")
+		//testcasesFailed++
+		err = handleCompilationError(ctx, idUUID, data, int(timeValue*1000), testidUUID, "Compilation error")
 	case "11":
-		testcasesFailed++
-		err = handleCompilationError(ctx, idUUID, data, int(timeValue), testidUUID, "Runtime error")
+		//testcasesFailed++
+		err = handleCompilationError(ctx, idUUID, data, int(timeValue*1000), testidUUID, "Runtime error")
 	}
 
 	if err != nil {

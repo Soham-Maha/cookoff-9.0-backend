@@ -66,8 +66,6 @@ func CreateSubmission(
 		return nil, nil, fmt.Errorf("error marshaling payload: %v", err)
 	}
 
-	fmt.Println(payload.Submissions)
-
 	return payloadJSON, testcases_id, nil
 }
 
