@@ -86,11 +86,6 @@ func ProcessSubmissionTask(ctx context.Context, t *asynq.Task) error {
 		return err
 	}
 
-	err = updateSubmission(ctx, idUUID, testcasesPassed, testcasesFailed, timeValue, data.Memory)
-	if err != nil {
-		return err
-	}
-
 	if err := submission.Tokens.DeleteToken(ctx, data.Token); err != nil {
 		log.Println("Error deleting token: ", err)
 		return err
@@ -105,7 +100,7 @@ func ProcessSubmissionTask(ctx context.Context, t *asynq.Task) error {
 	fmt.Println("Token :- ", tokenCount)
 
 	if tokenCount == 0 {
-		err = FinalizeSubmission(ctx, idUUID)
+		err = submission.UpdateSubmission(ctx, idUUID)
 		if err != nil {
 			return err
 		}
@@ -152,34 +147,16 @@ func handleCompilationError(ctx context.Context, idUUID uuid.UUID, data controll
 	return nil
 }
 
-func updateSubmission(ctx context.Context, idUUID uuid.UUID, testcasesPassed, testcasesFailed int, timeValue float64, memory int) error {
-	err := database.Queries.UpdateSubmission(ctx, db.UpdateSubmissionParams{
-		TestcasesPassed: pgtype.Int4{Int32: int32(testcasesPassed), Valid: true},
-		TestcasesFailed: pgtype.Int4{Int32: int32(testcasesFailed), Valid: true},
-		Runtime:         pgtype.Numeric{Int: big.NewInt(int64(timeValue * 1000)), Valid: true},
-		Memory:          pgtype.Numeric{Int: big.NewInt(int64(memory)), Valid: true},
-		ID:              idUUID,
-	})
-
-	if err != nil {
-		log.Println("Error updating submission: ", err)
-		return err
-	}
-
-	log.Printf("Submission ID: %v Testcases Passed: %v Testcases Failed: %v\n", idUUID, testcasesPassed, testcasesFailed)
-	return nil
-}
-
-func FinalizeSubmission(ctx context.Context, idUUID uuid.UUID) error {
-	status := SubmissionDoneStatus
-	err := database.Queries.UpdateSubmissionStatus(ctx, db.UpdateSubmissionStatusParams{
-		Status: &status,
-		ID:     idUUID,
-	})
-
-	if err != nil {
-		log.Println("Error updating submission status to done: ", err)
-		return err
-	}
-	return nil
-}
+//func FinalizeSubmission(ctx context.Context, idUUID uuid.UUID) error {
+//	status := SubmissionDoneStatus
+//	err := database.Queries.UpdateSubmissionStatus(ctx, db.UpdateSubmissionStatusParams{
+//		Status: &status,
+//		ID:     idUUID,
+//	})
+//
+//	if err != nil {
+//		log.Println("Error updating submission status to done: ", err)
+//		return err
+//	}
+//	return nil
+//}

@@ -107,3 +107,20 @@ func SendToJudge0(judge0Url *url.URL, params url.Values, payload []byte) (*http.
 
 	return resp, nil
 }
+
+func BatchGet(url string) (*http.Response, error) {
+	judgereq, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, err
+	}
+	judgereq.Header.Add("Content-Type", "application/json")
+	judgereq.Header.Add("Accept", "application/json")
+	judgereq.Header.Add("Authorization", fmt.Sprintf("Bearer %v", bearer))
+
+	resp, err := http.DefaultClient.Do(judgereq)
+	if err != nil {
+		return nil, fmt.Errorf("error sending request to Judge0: %v", err)
+	}
+
+	return resp, nil
+}

@@ -39,3 +39,38 @@ func (q *Queries) CreateSubmissionStatus(ctx context.Context, arg CreateSubmissi
 	)
 	return err
 }
+
+const getStatsForFinalSubEntry = `-- name: GetStatsForFinalSubEntry :many
+SELECT 
+    runtime, 
+    memory,   
+    status
+FROM submission_results
+WHERE submission_id = $1
+`
+
+type GetStatsForFinalSubEntryRow struct {
+	Runtime pgtype.Numeric
+	Memory  pgtype.Numeric
+	Status  string
+}
+
+func (q *Queries) GetStatsForFinalSubEntry(ctx context.Context, submissionID uuid.UUID) ([]GetStatsForFinalSubEntryRow, error) {
+	rows, err := q.db.Query(ctx, getStatsForFinalSubEntry, submissionID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetStatsForFinalSubEntryRow
+	for rows.Next() {
+		var i GetStatsForFinalSubEntryRow
+		if err := rows.Scan(&i.Runtime, &i.Memory, &i.Status); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}

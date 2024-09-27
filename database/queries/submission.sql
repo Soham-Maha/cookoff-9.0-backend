@@ -10,8 +10,13 @@ WHERE question_id = $1
 
 -- name: UpdateSubmission :exec
 UPDATE submissions
-SET testcases_passed = $1, testcases_failed = $2, runtime = $3, memory = $4
-WHERE id = $5;
+SET 
+    runtime = $1, 
+    memory = $2, 
+    status = $3,
+    testcases_passed = $4,
+    testcases_failed = $5
+WHERE id = $6;
 
 -- name: UpdateSubmissionStatus :exec
 UPDATE submissions

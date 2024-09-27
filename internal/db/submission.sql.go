@@ -274,24 +274,31 @@ func (q *Queries) UpdateDescriptionStatus(ctx context.Context, arg UpdateDescrip
 
 const updateSubmission = `-- name: UpdateSubmission :exec
 UPDATE submissions
-SET testcases_passed = $1, testcases_failed = $2, runtime = $3, memory = $4
-WHERE id = $5
+SET 
+    runtime = $1, 
+    memory = $2, 
+    status = $3,
+    testcases_passed = $4,
+    testcases_failed = $5
+WHERE id = $6
 `
 
 type UpdateSubmissionParams struct {
-	TestcasesPassed pgtype.Int4
-	TestcasesFailed pgtype.Int4
 	Runtime         pgtype.Numeric
 	Memory          pgtype.Numeric
+	Status          *string
+	TestcasesPassed pgtype.Int4
+	TestcasesFailed pgtype.Int4
 	ID              uuid.UUID
 }
 
 func (q *Queries) UpdateSubmission(ctx context.Context, arg UpdateSubmissionParams) error {
 	_, err := q.db.Exec(ctx, updateSubmission,
-		arg.TestcasesPassed,
-		arg.TestcasesFailed,
 		arg.Runtime,
 		arg.Memory,
+		arg.Status,
+		arg.TestcasesPassed,
+		arg.TestcasesFailed,
 		arg.ID,
 	)
 	return err

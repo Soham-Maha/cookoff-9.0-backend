@@ -40,6 +40,11 @@ func (tm *TokenManager) GetSubID(ctx context.Context, token string) (string, err
 	return subID, nil
 }
 
+func (tm *TokenManager) GetTokenMember(ctx context.Context, subID string) ([]string, error) {
+	members, err := tm.client.SMembers(ctx, fmt.Sprintf("sub:%s:tokens", subID)).Result()
+	return members, err
+}
+
 func (tm *TokenManager) GetTokenCount(ctx context.Context, subID string) (int64, error) {
 	tokenCount, err := tm.client.SCard(ctx, fmt.Sprintf("sub:%s:tokens", subID)).Result()
 	if err != nil {

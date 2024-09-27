@@ -3,11 +3,17 @@ package submission
 import (
 	"context"
 	"fmt"
+	"log"
+	"math/big"
 
+	"github.com/CodeChefVIT/cookoff-backend/internal/db"
 	"github.com/CodeChefVIT/cookoff-backend/internal/helpers/database"
 	logger "github.com/CodeChefVIT/cookoff-backend/internal/helpers/logging"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 )
+
+const SubmissionDoneStatus = "DONE"
 
 func CheckStatus(ctx context.Context, subid uuid.UUID) (bool, error) {
 	status, err := database.Queries.GetSubmissionStatusByID(ctx, subid)
@@ -76,4 +82,48 @@ func GetSubResult(ctx context.Context, subid uuid.UUID) (resultresp, error) {
 	}
 
 	return resp, nil
+}
+
+func UpdateSubmission(ctx context.Context, idUUID uuid.UUID) error {
+	status := SubmissionDoneStatus
+
+	data, err := database.Queries.GetStatsForFinalSubEntry(ctx, idUUID)
+	if err != nil {
+		log.Println("Error Fetching submission results: ", err)
+		return err
+	}
+	var runtime float64
+	var memory int64
+	var passed, failed int
+	for _, v := range data {
+		temp, err := v.Runtime.Float64Value()
+		if err != nil {
+			log.Println("Failed to convert runtime to float kms")
+			return err
+		}
+		runtime += temp.Float64
+		memory += v.Memory.Int.Int64()
+		if v.Status == "success" {
+			passed += 1
+		} else {
+			failed += 1
+		}
+	}
+
+	err = database.Queries.UpdateSubmission(ctx, db.UpdateSubmissionParams{
+		Runtime:         pgtype.Numeric{Int: big.NewInt(int64(runtime * 1000)), Valid: true},
+		Memory:          pgtype.Numeric{Int: big.NewInt(int64(memory)), Valid: true},
+		Status:          &status,
+		TestcasesPassed: pgtype.Int4{Int32: int32(passed), Valid: true},
+		TestcasesFailed: pgtype.Int4{Int32: int32(failed), Valid: true},
+		ID:              idUUID,
+	})
+
+	if err != nil {
+		log.Println("Error updating submission: ", err)
+		return err
+	}
+
+	log.Printf("Submission ID: %v\n", idUUID)
+	return nil
 }
