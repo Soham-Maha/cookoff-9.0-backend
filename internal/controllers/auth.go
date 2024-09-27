@@ -172,6 +172,10 @@ func Logout(w http.ResponseWriter, r *http.Request) {
 		jwt.MaxAge = -1
 		jwt.Value = ""
 		jwt.Expires = time.Now()
+		jwt.Path = "/"
+		jwt.SameSite = http.SameSiteNoneMode
+		jwt.Secure = true
+		jwt.HttpOnly = true
 		http.SetCookie(w, jwt)
 	}
 
@@ -179,6 +183,10 @@ func Logout(w http.ResponseWriter, r *http.Request) {
 		refresh.MaxAge = -1
 		refresh.Value = ""
 		refresh.Expires = time.Now()
+		refresh.Path = "/"
+		refresh.SameSite = http.SameSiteNoneMode
+		refresh.Secure = true
+		refresh.HttpOnly = true
 		http.SetCookie(w, refresh)
 	}
 
