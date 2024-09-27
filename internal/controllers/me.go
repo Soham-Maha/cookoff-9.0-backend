@@ -15,6 +15,7 @@ type DashboardSubmission struct {
 	Title       string `json:"title"`
 	Description string `json:"description"`
 	Score       int    `json:"score"`
+	MaxScore    int    `json:"max_score"`
 }
 
 func MeHandler(w http.ResponseWriter, r *http.Request) {
@@ -48,7 +49,10 @@ func MeHandler(w http.ResponseWriter, r *http.Request) {
 		submissionsByRound[round] = append(submissionsByRound[round], DashboardSubmission{
 			Title:       submission.Title,
 			Description: submission.QuestionDescription,
-			Score:       0,
+			Score: int(
+				submission.TestcasesPassed.Int32 * (submission.Points / (submission.TestcasesPassed.Int32 + submission.TestcasesFailed.Int32)),
+			),
+			MaxScore: int(submission.Points),
 		})
 	}
 
