@@ -158,27 +158,57 @@ func (q *Queries) GetSubmissionStatusByID(ctx context.Context, id uuid.UUID) (*s
 }
 
 const getSubmissionsWithRoundByUserId = `-- name: GetSubmissionsWithRoundByUserId :many
-SELECT q.round, q.title, q.description, s.id, s.question_id, s.testcases_passed, s.testcases_failed, s.runtime, s.submission_time, s.language_id, s.description, s.memory, s.user_id, s.status
-FROM submissions s
-INNER JOIN questions q ON s.question_id = q.id
-WHERE s.user_id = $1
+WITH RankedSubmissions AS (
+  SELECT 
+    s.id, s.question_id, s.testcases_passed, s.testcases_failed, s.runtime, s.submission_time, s.language_id, s.description, s.memory, s.user_id, s.status,
+    q.round,
+    q.title,
+    q.description AS question_description,
+    ROW_NUMBER() OVER (
+      PARTITION BY s.question_id 
+      ORDER BY s.testcases_passed DESC, s.testcases_failed ASC, s.runtime ASC
+    ) AS rank
+  FROM submissions s
+  INNER JOIN questions q ON s.question_id = q.id
+  WHERE s.user_id = $1
+)
+SELECT 
+  rs.id,
+  rs.question_id,
+  rs.user_id,
+  rs.testcases_passed,
+  rs.testcases_failed,
+  rs.runtime,
+  rs.submission_time,
+  rs.language_id,
+  rs.description AS submission_description,
+  rs.memory,
+  rs.status,
+  q.round,
+  q.title,
+  q.description AS question_description,
+  q.points
+FROM RankedSubmissions rs
+INNER JOIN questions q ON rs.question_id = q.id
+WHERE rs.rank = 1
 `
 
 type GetSubmissionsWithRoundByUserIdRow struct {
-	Round           int32
-	Title           string
-	Description     string
-	ID              uuid.UUID
-	QuestionID      uuid.UUID
-	TestcasesPassed pgtype.Int4
-	TestcasesFailed pgtype.Int4
-	Runtime         pgtype.Numeric
-	SubmissionTime  pgtype.Timestamp
-	LanguageID      int32
-	Description_2   *string
-	Memory          pgtype.Numeric
-	UserID          uuid.NullUUID
-	Status          *string
+	ID                    uuid.UUID
+	QuestionID            uuid.UUID
+	UserID                uuid.NullUUID
+	TestcasesPassed       pgtype.Int4
+	TestcasesFailed       pgtype.Int4
+	Runtime               pgtype.Numeric
+	SubmissionTime        pgtype.Timestamp
+	LanguageID            int32
+	SubmissionDescription *string
+	Memory                pgtype.Numeric
+	Status                *string
+	Round                 int32
+	Title                 string
+	QuestionDescription   string
+	Points                int32
 }
 
 func (q *Queries) GetSubmissionsWithRoundByUserId(ctx context.Context, userID uuid.NullUUID) ([]GetSubmissionsWithRoundByUserIdRow, error) {
@@ -191,20 +221,21 @@ func (q *Queries) GetSubmissionsWithRoundByUserId(ctx context.Context, userID uu
 	for rows.Next() {
 		var i GetSubmissionsWithRoundByUserIdRow
 		if err := rows.Scan(
-			&i.Round,
-			&i.Title,
-			&i.Description,
 			&i.ID,
 			&i.QuestionID,
+			&i.UserID,
 			&i.TestcasesPassed,
 			&i.TestcasesFailed,
 			&i.Runtime,
 			&i.SubmissionTime,
 			&i.LanguageID,
-			&i.Description_2,
+			&i.SubmissionDescription,
 			&i.Memory,
-			&i.UserID,
 			&i.Status,
+			&i.Round,
+			&i.Title,
+			&i.QuestionDescription,
+			&i.Points,
 		); err != nil {
 			return nil, err
 		}
