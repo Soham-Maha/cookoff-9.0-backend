@@ -20,6 +20,16 @@ func GetAllUsers(w http.ResponseWriter, r *http.Request) {
 	}
 	httphelpers.WriteJSON(w, http.StatusOK, users)
 }
+
+func GetLeaderboard(w http.ResponseWriter, r *http.Request) {
+	users, err := database.Queries.GetLeaderboard(r.Context())
+	if err != nil {
+		httphelpers.WriteError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	httphelpers.WriteJSON(w, http.StatusAccepted, users)
+}
+
 func UpgradeUserToRound(w http.ResponseWriter, r *http.Request) {
 	var requestBody struct {
 		UserIDs []string `json:"user_ids"`

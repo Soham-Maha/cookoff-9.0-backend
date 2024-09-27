@@ -127,7 +127,7 @@ func BadCodeAlert(ctx context.Context, id uuid.UUID, w http.ResponseWriter) erro
 		return nil
 	}
 
-	var req string = "https://judge0-ce.p.sulu.sh/submissions/batch?tokens=" + strings.Join(members, ",")
+	var req string = "https://judge0-ce.p.sulu.sh/submissions/batch?base64_encoded=true&tokens=" + strings.Join(members, ",")
 	fmt.Println("urk :- ", req)
 	resp, err := submission.BatchGet(req)
 	if err != nil {

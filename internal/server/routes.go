@@ -60,6 +60,7 @@ func (s *Server) RegisterRoutes(taskClient *asynq.Client) http.Handler {
 		adminRoutes.Post("/unroast", controllers.UnbanUser)
 		adminRoutes.Post("/round/", controllers.SetRoundStatus)
 		adminRoutes.Get("/users", controllers.GetAllUsers)
+		adminRoutes.Get("/leaderboard", controllers.GetLeaderboard)
 
 		adminRoutes.Post("/testcase", controllers.CreateTestCaseHandler)
 		adminRoutes.Put("/testcase/{testcase_id}", controllers.UpdateTestCaseHandler)

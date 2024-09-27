@@ -34,3 +34,7 @@ WHERE id = $1;
 UPDATE users
 SET is_banned = FALSE
 WHERE id = $1;
+
+-- name: GetLeaderboard :many
+select id, name, score from users
+order by score;
