@@ -18,12 +18,10 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-const TypeProcessSubmission = "submission:process"
-const SubmissionDoneStatus = "DONE"
-
-func calculateScore() float64 {
-	return 7.4
-}
+const (
+	TypeProcessSubmission = "submission:process"
+	SubmissionDoneStatus  = "DONE"
+)
 
 // ProcessSubmissionTask processes the submission task based on status.
 func ProcessSubmissionTask(ctx context.Context, t *asynq.Task) error {
@@ -64,22 +62,43 @@ func ProcessSubmissionTask(ctx context.Context, t *asynq.Task) error {
 	//	return err
 	//}
 
-	//testcasesPassed := int(sub.TestcasesPassed.Int32)
-	//testcasesFailed := int(sub.TestcasesFailed.Int32)
+	// testcasesPassed := int(sub.TestcasesPassed.Int32)
+	// testcasesFailed := int(sub.TestcasesFailed.Int32)
 
 	switch data.Status.ID {
 	case "3":
-		//testcasesPassed++
+		// testcasesPassed++
 		err = handleCompilationError(ctx, idUUID, data, int(timeValue*1000), testidUUID, "success")
 	case "4":
-		//testcasesFailed++
-		err = handleCompilationError(ctx, idUUID, data, int(timeValue*1000), testidUUID, "wrong answer")
+		// testcasesFailed++
+		err = handleCompilationError(
+			ctx,
+			idUUID,
+			data,
+			int(timeValue*1000),
+			testidUUID,
+			"wrong answer",
+		)
 	case "6":
-		//testcasesFailed++
-		err = handleCompilationError(ctx, idUUID, data, int(timeValue*1000), testidUUID, "Compilation error")
+		// testcasesFailed++
+		err = handleCompilationError(
+			ctx,
+			idUUID,
+			data,
+			int(timeValue*1000),
+			testidUUID,
+			"Compilation error",
+		)
 	case "11":
-		//testcasesFailed++
-		err = handleCompilationError(ctx, idUUID, data, int(timeValue*1000), testidUUID, "Runtime error")
+		// testcasesFailed++
+		err = handleCompilationError(
+			ctx,
+			idUUID,
+			data,
+			int(timeValue*1000),
+			testidUUID,
+			"Runtime error",
+		)
 	}
 
 	if err != nil {
@@ -122,9 +141,15 @@ func parseTime(timeStr string) (float64, error) {
 	return timeValue, nil
 }
 
-func handleCompilationError(ctx context.Context, idUUID uuid.UUID, data controllers.Data, time int, testcase uuid.UUID, status string) error {
+func handleCompilationError(
+	ctx context.Context,
+	idUUID uuid.UUID,
+	data controllers.Data,
+	time int,
+	testcase uuid.UUID,
+	status string,
+) error {
 	subID, err := uuid.NewV7()
-
 	if err != nil {
 		log.Println("Error updating submission for compilation error: ", err)
 		return err
@@ -139,24 +164,9 @@ func handleCompilationError(ctx context.Context, idUUID uuid.UUID, data controll
 		Description:  &data.Status.Description,
 		Status:       status,
 	})
-
 	if err != nil {
 		log.Println("Error creating submission status error: ", err)
 		return err
 	}
 	return nil
 }
-
-//func FinalizeSubmission(ctx context.Context, idUUID uuid.UUID) error {
-//	status := SubmissionDoneStatus
-//	err := database.Queries.UpdateSubmissionStatus(ctx, db.UpdateSubmissionStatusParams{
-//		Status: &status,
-//		ID:     idUUID,
-//	})
-//
-//	if err != nil {
-//		log.Println("Error updating submission status to done: ", err)
-//		return err
-//	}
-//	return nil
-//}
