@@ -12,10 +12,10 @@ import (
 )
 
 type DashboardSubmission struct {
-	Title       string `json:"title"`
-	Description string `json:"description"`
-	Score       int    `json:"score"`
-	MaxScore    int    `json:"max_score"`
+	Title       string  `json:"title"`
+	Description string  `json:"description"`
+	Score       float64 `json:"score"`
+	MaxScore    int     `json:"max_score"`
 }
 
 func MeHandler(w http.ResponseWriter, r *http.Request) {
@@ -46,13 +46,17 @@ func MeHandler(w http.ResponseWriter, r *http.Request) {
 
 	for _, submission := range submissions {
 		round := fmt.Sprint(submission.Round)
+
+		pointsPerSubmission := float64(
+			submission.Points,
+		) / float64(
+			submission.TestcasesPassed.Int32+submission.TestcasesFailed.Int32,
+		)
 		submissionsByRound[round] = append(submissionsByRound[round], DashboardSubmission{
 			Title:       submission.Title,
 			Description: submission.QuestionDescription,
-			Score: int(
-				submission.TestcasesPassed.Int32 * (submission.Points / (submission.TestcasesPassed.Int32 + submission.TestcasesFailed.Int32)),
-			),
-			MaxScore: int(submission.Points),
+			Score:       float64(submission.TestcasesPassed.Int32) * pointsPerSubmission,
+			MaxScore:    int(submission.Points),
 		})
 	}
 
