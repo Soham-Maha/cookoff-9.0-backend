@@ -47,7 +47,7 @@ func MeHandler(w http.ResponseWriter, r *http.Request) {
 		round := fmt.Sprint(submission.Round)
 		submissionsByRound[round] = append(submissionsByRound[round], DashboardSubmission{
 			Title:       submission.Title,
-			Description: submission.Description,
+			Description: submission.QuestionDescription,
 			Score:       0,
 		})
 	}

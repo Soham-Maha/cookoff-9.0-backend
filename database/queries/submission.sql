@@ -38,10 +38,39 @@ WHERE
     id = $1;
 
 -- name: GetSubmissionsWithRoundByUserId :many
-SELECT q.round, q.title, q.description, s.*
-FROM submissions s
-INNER JOIN questions q ON s.question_id = q.id
-WHERE s.user_id = $1;
+WITH RankedSubmissions AS (
+  SELECT 
+    s.*,
+    q.round,
+    q.title,
+    q.description AS question_description,
+    ROW_NUMBER() OVER (
+      PARTITION BY s.question_id 
+      ORDER BY s.testcases_passed DESC, s.testcases_failed ASC, s.runtime ASC
+    ) AS rank
+  FROM submissions s
+  INNER JOIN questions q ON s.question_id = q.id
+  WHERE s.user_id = $1
+)
+SELECT 
+  rs.id,
+  rs.question_id,
+  rs.user_id,
+  rs.testcases_passed,
+  rs.testcases_failed,
+  rs.runtime,
+  rs.submission_time,
+  rs.language_id,
+  rs.description AS submission_description,
+  rs.memory,
+  rs.status,
+  q.round,
+  q.title,
+  q.description AS question_description,
+  q.points
+FROM RankedSubmissions rs
+INNER JOIN questions q ON rs.question_id = q.id
+WHERE rs.rank = 1;
 
 -- name: GetSubmissionByID :one
 SELECT
