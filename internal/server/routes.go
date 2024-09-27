@@ -30,14 +30,24 @@ func (s *Server) RegisterRoutes(taskClient *asynq.Client) http.Handler {
 	r.Group(func(protected chi.Router) {
 		protected.Use(jwtauth.Verifier(auth.TokenAuth))
 		protected.Use(jwtauth.Authenticator(auth.TokenAuth))
+		protected.Use(middlewares.BanCheckMiddleware)
 
 		protected.Get("/result/{submission_id}", controllers.GetResult)
 		protected.Get("/me", controllers.MeHandler)
 		protected.Get("/protected", controllers.ProtectedHandler)
-		//banCheckRoutes := protected.With(middlewares.BanCheckMiddleware)
-		protected.Post("/submit", controllers.SubmitCode)                 //change to bancheck later
-		protected.Post("/runcode", controllers.RunCode)                   //change to bancheck later
-		protected.Get("/question/round", controllers.GetQuestionsByRound) //change to bancheck later
+
+		protected.Post(
+			"/submit",
+			controllers.SubmitCode,
+		)
+		protected.Post(
+			"/runcode",
+			controllers.RunCode,
+		)
+		protected.Get(
+			"/question/round",
+			controllers.GetQuestionsByRound,
+		)
 
 		adminRoutes := protected.With(middlewares.RoleAuthorizationMiddleware("admin"))
 		adminRoutes.Post("/question/create", controllers.CreateQuestion)
