@@ -212,6 +212,28 @@ func (q *Queries) UnbanUser(ctx context.Context, id uuid.UUID) error {
 	return err
 }
 
+const updateProfile = `-- name: UpdateProfile :exec
+UPDATE users SET reg_no = $1, password = $2, name = $3
+WHERE id = $4
+`
+
+type UpdateProfileParams struct {
+	RegNo    string
+	Password string
+	Name     string
+	ID       uuid.UUID
+}
+
+func (q *Queries) UpdateProfile(ctx context.Context, arg UpdateProfileParams) error {
+	_, err := q.db.Exec(ctx, updateProfile,
+		arg.RegNo,
+		arg.Password,
+		arg.Name,
+		arg.ID,
+	)
+	return err
+}
+
 const upgradeUsersToRound = `-- name: UpgradeUsersToRound :exec
 UPDATE users
 SET round_qualified = GREATEST(round_qualified, $2)
