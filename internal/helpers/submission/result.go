@@ -124,6 +124,12 @@ func UpdateSubmission(ctx context.Context, idUUID uuid.UUID) error {
 		return err
 	}
 
+	err = database.Queries.UpdateScore(ctx, idUUID)
+	if err != nil {
+		log.Println("Error updating the score: ", err)
+		return err
+	}
+
 	log.Printf("Submission ID: %v\n", idUUID)
 	return nil
 }

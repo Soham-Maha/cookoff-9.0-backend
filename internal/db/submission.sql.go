@@ -272,6 +272,29 @@ func (q *Queries) UpdateDescriptionStatus(ctx context.Context, arg UpdateDescrip
 	return err
 }
 
+const updateScore = `-- name: UpdateScore :exec
+WITH best_submissions AS (
+    SELECT 
+        s.user_id,
+        s.question_id,
+        MAX((s.testcases_passed)*10/(s.testcases_passed  + s.testcases_failed)) AS best_score
+    FROM submissions s
+    WHERE s.id = $1
+    GROUP BY s.user_id, s.question_id
+)
+UPDATE users
+SET score = (
+    SELECT SUM(best_score)
+    FROM best_submissions
+)
+WHERE users.id = (SELECT distinct(user_id) FROM best_submissions LIMIT 1)
+`
+
+func (q *Queries) UpdateScore(ctx context.Context, id uuid.UUID) error {
+	_, err := q.db.Exec(ctx, updateScore, id)
+	return err
+}
+
 const updateSubmission = `-- name: UpdateSubmission :exec
 UPDATE submissions
 SET 
