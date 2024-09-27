@@ -4,6 +4,7 @@ import (
 	"errors"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/CodeChefVIT/cookoff-backend/internal/db"
 	"github.com/CodeChefVIT/cookoff-backend/internal/helpers/auth"
@@ -169,11 +170,15 @@ func Logout(w http.ResponseWriter, r *http.Request) {
 
 	if jwt != nil {
 		jwt.MaxAge = -1
+		jwt.Value = ""
+		jwt.Expires = time.Now()
 		http.SetCookie(w, jwt)
 	}
 
 	if refresh != nil {
 		refresh.MaxAge = -1
+		refresh.Value = ""
+		refresh.Expires = time.Now()
 		http.SetCookie(w, refresh)
 	}
 
