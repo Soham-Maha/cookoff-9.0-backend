@@ -70,6 +70,11 @@ func GetQuestionsByRound(w http.ResponseWriter, r *http.Request) {
 		httphelpers.WriteError(w, http.StatusInternalServerError, err.Error())
 	}
 
+	if user.RoundQualified == 0 {
+		httphelpers.WriteError(w, http.StatusForbidden, "user is not qualified for round")
+		return
+	}
+
 	questions, err := database.Queries.GetQuestionByRound(ctx, user.RoundQualified)
 	if err != nil {
 		httphelpers.WriteError(w, http.StatusBadRequest, err.Error())
