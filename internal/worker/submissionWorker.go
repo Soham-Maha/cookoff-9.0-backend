@@ -56,15 +56,6 @@ func ProcessSubmissionTask(ctx context.Context, t *asynq.Task) error {
 		log.Fatalf("Error parsing UUID: %v", err)
 	}
 
-	//sub, err := database.Queries.GetSubmission(ctx, idUUID)
-	//if err != nil {
-	//	log.Println("Error retrieving submission: ", err)
-	//	return err
-	//}
-
-	// testcasesPassed := int(sub.TestcasesPassed.Int32)
-	// testcasesFailed := int(sub.TestcasesFailed.Int32)
-
 	switch data.Status.ID {
 	case "3":
 		// testcasesPassed++

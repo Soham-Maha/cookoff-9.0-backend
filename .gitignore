@@ -28,3 +28,7 @@ tmp/
 # Project build
 main
 *templ.go
+
+certbot
+nginx/nginx.conf
+nginx/

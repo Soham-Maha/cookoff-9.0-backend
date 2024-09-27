@@ -66,7 +66,6 @@ func MeHandler(w http.ResponseWriter, r *http.Request) {
 		"score":       user.Score.Int32,
 		"submissions": submissionsByRound,
 	}
-
 	httphelpers.WriteJSON(w, http.StatusOK, map[string]any{
 		"message": "User details fetched successfully",
 		"data":    data,

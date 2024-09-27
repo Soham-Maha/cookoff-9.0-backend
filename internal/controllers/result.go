@@ -2,20 +2,15 @@ package controllers
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
-	"io"
 	"log"
 	"math/big"
 	"net/http"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/CodeChefVIT/cookoff-backend/internal/db"
 	"github.com/CodeChefVIT/cookoff-backend/internal/helpers/database"
 	httphelpers "github.com/CodeChefVIT/cookoff-backend/internal/helpers/http"
-	logger "github.com/CodeChefVIT/cookoff-backend/internal/helpers/logging"
 	"github.com/CodeChefVIT/cookoff-backend/internal/helpers/submission"
 	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -121,131 +116,6 @@ type Response struct {
 	Submissions []GetSub `json:"submissions"`
 }
 
-func BadCodeAlert(ctx context.Context, id uuid.UUID, w http.ResponseWriter) error {
-	members, err := submission.Tokens.GetTokenMember(ctx, id.String())
-	if err != nil {
-		return err
-	}
-
-	if len(members) == 0 {
-		err := submission.UpdateSubmission(ctx, id)
-		if err != nil {
-			fmt.Println("Error parsing JSON:", err)
-			httphelpers.WriteError(
-				w,
-				http.StatusInternalServerError,
-				"Internal server error!(Failed to update submission table)",
-			)
-			return err
-		}
-		return nil
-	}
-
-	var req string = "https://judge0-ce.p.sulu.sh/submissions/batch?base64_encoded=true&tokens=" + strings.Join(members, ",")
-	fmt.Println("urk :- ", req)
-	resp, err := submission.BatchGet(req)
-	if err != nil {
-		logger.Errof("Error sending request to Judge0: %v", err)
-		httphelpers.WriteError(
-			w,
-			http.StatusInternalServerError,
-			fmt.Sprintf("Error sending request to Judge0: %v", err),
-		)
-		return err
-	}
-	defer resp.Body.Close()
-	respBytes, err := io.ReadAll(resp.Body)
-	if err != nil {
-		logger.Errof("Error reading response body from Judge0: %v", err)
-		httphelpers.WriteError(
-			w,
-			http.StatusInternalServerError,
-			fmt.Sprintf("Error reading response body from Judge0: %v", err),
-		)
-		return err
-	}
-
-	if resp.StatusCode != http.StatusOK {
-		logger.Errof(
-			"Unexpected status code from Judge0: %d, error: %v",
-			resp.StatusCode,
-			string(respBytes),
-		)
-		httphelpers.WriteError(w, http.StatusInternalServerError, "Internal server error!")
-		return err
-	}
-
-	var temp Response
-	err = json.Unmarshal(respBytes, &temp)
-	if err != nil {
-		fmt.Println("Error parsing JSON:", err)
-		httphelpers.WriteError(
-			w,
-			http.StatusInternalServerError,
-			"Internal server error!(Failed to unmarshal the response)",
-		)
-		return err
-	}
-
-	if count, err := submission.Tokens.GetTokenCount(ctx, id.String()); count == 0 || err != nil {
-		err := submission.UpdateSubmission(ctx, id)
-		if err != nil {
-			fmt.Println("Error parsing JSON:", err)
-			httphelpers.WriteError(
-				w,
-				http.StatusInternalServerError,
-				"Internal server error!(Failed to update submission table)",
-			)
-			return err
-		}
-	}
-
-	for _, v := range temp.Submissions {
-		if v.Status.ID != 1 || v.Status.ID != 2 {
-			submission.Tokens.DeleteToken(ctx, v.Token)
-			_, testcase, err := submission.GetSubID(ctx, v.Token)
-			if err != nil {
-				fmt.Println("Failed to get details from redis:", err)
-				return nil
-				// httphelpers.WriteError(w, http.StatusInternalServerError, "Internal server error!(Failed to get from redis)")
-				// return err
-			}
-			timeValue, err := parseTime(*v.Time)
-			if err != nil {
-				fmt.Println("Error converting to float:", err)
-				httphelpers.WriteError(
-					w,
-					http.StatusInternalServerError,
-					"Internal server error!(Failed to convert to float)",
-				)
-				return err
-			}
-			tid := uuid.MustParse(testcase)
-			switch v.Status.ID {
-			case 3:
-				err = HandleCompilationError(ctx, id, v, int(timeValue*1000), tid, "success")
-			case 4:
-				err = HandleCompilationError(ctx, id, v, int(timeValue*1000), tid, "wrong answer")
-			case 6:
-				err = HandleCompilationError(
-					ctx,
-					id,
-					v,
-					int(timeValue*1000),
-					tid,
-					"Compilation error",
-				)
-			case 11:
-				err = HandleCompilationError(ctx, id, v, int(timeValue*1000), tid, "Runtime error")
-			}
-			if err != nil {
-				fmt.Println("Failed to add submission_results")
-			}
-		}
-	}
-
-	return nil
-}
 
 func parseTime(timeStr string) (float64, error) {
 	if timeStr == "" {
