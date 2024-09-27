@@ -42,14 +42,22 @@ func GetResult(w http.ResponseWriter, r *http.Request) {
 
 	processed, err := submission.CheckStatus(ctx, subid)
 	if err != nil {
-		httphelpers.WriteError(w, http.StatusInternalServerError, "Internal server error while getting status")
+		httphelpers.WriteError(
+			w,
+			http.StatusInternalServerError,
+			"Internal server error while getting status",
+		)
 		return
 	}
 
 	if processed {
 		result, err := submission.GetSubResult(ctx, subid)
 		if err != nil {
-			httphelpers.WriteError(w, http.StatusInternalServerError, "Internal server error while getting submission result")
+			httphelpers.WriteError(
+				w,
+				http.StatusInternalServerError,
+				"Internal server error while getting submission result",
+			)
 			return
 		}
 		httphelpers.WriteJSON(w, http.StatusOK, result)
@@ -66,20 +74,24 @@ func GetResult(w http.ResponseWriter, r *http.Request) {
 			return
 
 		case <-ticker.C:
-			err := BadCodeAlert(ctx, subid, w)
-			if err != nil {
-				return
-			}
 			processed, err := submission.CheckStatus(ctx, subid)
 			if err != nil {
-				httphelpers.WriteError(w, http.StatusInternalServerError, "Internal server error while getting status")
+				httphelpers.WriteError(
+					w,
+					http.StatusInternalServerError,
+					"Internal server error while getting status",
+				)
 				return
 			}
 
 			if processed {
 				result, err := submission.GetSubResult(ctx, subid)
 				if err != nil {
-					httphelpers.WriteError(w, http.StatusInternalServerError, "Internal server error while getting submission result")
+					httphelpers.WriteError(
+						w,
+						http.StatusInternalServerError,
+						"Internal server error while getting submission result",
+					)
 					return
 				}
 				httphelpers.WriteJSON(w, http.StatusOK, result)
@@ -87,7 +99,6 @@ func GetResult(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	}
-
 }
 
 type GetStatus struct {
@@ -111,7 +122,6 @@ type Response struct {
 }
 
 func BadCodeAlert(ctx context.Context, id uuid.UUID, w http.ResponseWriter) error {
-
 	members, err := submission.Tokens.GetTokenMember(ctx, id.String())
 	if err != nil {
 		return err
@@ -121,7 +131,11 @@ func BadCodeAlert(ctx context.Context, id uuid.UUID, w http.ResponseWriter) erro
 		err := submission.UpdateSubmission(ctx, id)
 		if err != nil {
 			fmt.Println("Error parsing JSON:", err)
-			httphelpers.WriteError(w, http.StatusInternalServerError, "Internal server error!(Failed to update submission table)")
+			httphelpers.WriteError(
+				w,
+				http.StatusInternalServerError,
+				"Internal server error!(Failed to update submission table)",
+			)
 			return err
 		}
 		return nil
@@ -165,7 +179,11 @@ func BadCodeAlert(ctx context.Context, id uuid.UUID, w http.ResponseWriter) erro
 	err = json.Unmarshal(respBytes, &temp)
 	if err != nil {
 		fmt.Println("Error parsing JSON:", err)
-		httphelpers.WriteError(w, http.StatusInternalServerError, "Internal server error!(Failed to unmarshal the response)")
+		httphelpers.WriteError(
+			w,
+			http.StatusInternalServerError,
+			"Internal server error!(Failed to unmarshal the response)",
+		)
 		return err
 	}
 
@@ -173,7 +191,11 @@ func BadCodeAlert(ctx context.Context, id uuid.UUID, w http.ResponseWriter) erro
 		err := submission.UpdateSubmission(ctx, id)
 		if err != nil {
 			fmt.Println("Error parsing JSON:", err)
-			httphelpers.WriteError(w, http.StatusInternalServerError, "Internal server error!(Failed to update submission table)")
+			httphelpers.WriteError(
+				w,
+				http.StatusInternalServerError,
+				"Internal server error!(Failed to update submission table)",
+			)
 			return err
 		}
 	}
@@ -185,13 +207,17 @@ func BadCodeAlert(ctx context.Context, id uuid.UUID, w http.ResponseWriter) erro
 			if err != nil {
 				fmt.Println("Failed to get details from redis:", err)
 				return nil
-				//httphelpers.WriteError(w, http.StatusInternalServerError, "Internal server error!(Failed to get from redis)")
-				//return err
+				// httphelpers.WriteError(w, http.StatusInternalServerError, "Internal server error!(Failed to get from redis)")
+				// return err
 			}
 			timeValue, err := parseTime(*v.Time)
 			if err != nil {
 				fmt.Println("Error converting to float:", err)
-				httphelpers.WriteError(w, http.StatusInternalServerError, "Internal server error!(Failed to convert to float)")
+				httphelpers.WriteError(
+					w,
+					http.StatusInternalServerError,
+					"Internal server error!(Failed to convert to float)",
+				)
 				return err
 			}
 			tid := uuid.MustParse(testcase)
@@ -201,7 +227,14 @@ func BadCodeAlert(ctx context.Context, id uuid.UUID, w http.ResponseWriter) erro
 			case 4:
 				err = HandleCompilationError(ctx, id, v, int(timeValue*1000), tid, "wrong answer")
 			case 6:
-				err = HandleCompilationError(ctx, id, v, int(timeValue*1000), tid, "Compilation error")
+				err = HandleCompilationError(
+					ctx,
+					id,
+					v,
+					int(timeValue*1000),
+					tid,
+					"Compilation error",
+				)
 			case 11:
 				err = HandleCompilationError(ctx, id, v, int(timeValue*1000), tid, "Runtime error")
 			}
@@ -227,9 +260,15 @@ func parseTime(timeStr string) (float64, error) {
 	return timeValue, nil
 }
 
-func HandleCompilationError(ctx context.Context, idUUID uuid.UUID, data GetSub, time int, testcase uuid.UUID, status string) error {
+func HandleCompilationError(
+	ctx context.Context,
+	idUUID uuid.UUID,
+	data GetSub,
+	time int,
+	testcase uuid.UUID,
+	status string,
+) error {
 	subID, err := uuid.NewV7()
-
 	if err != nil {
 		log.Println("Error updating submission for compilation error: ", err)
 		return err
@@ -244,7 +283,6 @@ func HandleCompilationError(ctx context.Context, idUUID uuid.UUID, data GetSub, 
 		Description:  &data.Status.Description,
 		Status:       status,
 	})
-
 	if err != nil {
 		log.Println("Error creating submission status error: ", err)
 		return err
