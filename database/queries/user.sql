@@ -20,10 +20,12 @@ WHERE id = $1;
 -- name: GetAllUsers :many
 SELECT *
 FROM users;
--- name: UpgradeUsersToRound :batchexec
+
+-- name: UpgradeUsersToRound :exec
 UPDATE users
 SET round_qualified = GREATEST(round_qualified, $2)
-WHERE id = $1;
+WHERE id::TEXT = ANY($1::TEXT[]);
+
 -- name: BanUser :exec
 UPDATE users
 SET is_banned = TRUE

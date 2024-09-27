@@ -31,12 +31,13 @@ func (s *Server) RegisterRoutes(taskClient *asynq.Client) http.Handler {
 		protected.Use(jwtauth.Verifier(auth.TokenAuth))
 		protected.Use(jwtauth.Authenticator(auth.TokenAuth))
 
+		protected.Get("/result/{submission_id}", controllers.GetResult)
 		protected.Get("/me", controllers.MeHandler)
 		protected.Get("/protected", controllers.ProtectedHandler)
-	banCheckRoutes := protected.With(middlewares.BanCheckMiddleware)
-    banCheckRoutes.Post("/submit", controllers.SubmitCode)
-    banCheckRoutes.Post("/runcode", controllers.RunCode)
-    banCheckRoutes.Get("/question/round", controllers.GetQuestionsByRound)
+		//banCheckRoutes := protected.With(middlewares.BanCheckMiddleware)
+		protected.Post("/submit", controllers.SubmitCode)                 //change to bancheck later
+		protected.Post("/runcode", controllers.RunCode)                   //change to bancheck later
+		protected.Get("/question/round", controllers.GetQuestionsByRound) //change to bancheck later
 
 		adminRoutes := protected.With(middlewares.RoleAuthorizationMiddleware("admin"))
 		adminRoutes.Post("/question/create", controllers.CreateQuestion)
@@ -49,7 +50,6 @@ func (s *Server) RegisterRoutes(taskClient *asynq.Client) http.Handler {
 		adminRoutes.Post("/unroast", controllers.UnbanUser)
 		adminRoutes.Post("/round/", controllers.SetRoundStatus)
 		adminRoutes.Get("/users", controllers.GetAllUsers)
-	})
 
 		adminRoutes.Post("/testcase", controllers.CreateTestCaseHandler)
 		adminRoutes.Put("/testcase/{testcase_id}", controllers.UpdateTestCaseHandler)

@@ -180,3 +180,19 @@ func (q *Queries) UnbanUser(ctx context.Context, id uuid.UUID) error {
 	_, err := q.db.Exec(ctx, unbanUser, id)
 	return err
 }
+
+const upgradeUsersToRound = `-- name: UpgradeUsersToRound :exec
+UPDATE users
+SET round_qualified = GREATEST(round_qualified, $2)
+WHERE id::TEXT = ANY($1::TEXT[])
+`
+
+type UpgradeUsersToRoundParams struct {
+	Column1        []string
+	RoundQualified int32
+}
+
+func (q *Queries) UpgradeUsersToRound(ctx context.Context, arg UpgradeUsersToRoundParams) error {
+	_, err := q.db.Exec(ctx, upgradeUsersToRound, arg.Column1, arg.RoundQualified)
+	return err
+}

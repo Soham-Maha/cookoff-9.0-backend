@@ -184,8 +184,9 @@ func BadCodeAlert(ctx context.Context, id uuid.UUID, w http.ResponseWriter) erro
 			_, testcase, err := submission.GetSubID(ctx, v.Token)
 			if err != nil {
 				fmt.Println("Failed to get details from redis:", err)
-				httphelpers.WriteError(w, http.StatusInternalServerError, "Internal server error!(Failed to get from redis)")
-				return err
+				return nil
+				//httphelpers.WriteError(w, http.StatusInternalServerError, "Internal server error!(Failed to get from redis)")
+				//return err
 			}
 			timeValue, err := parseTime(*v.Time)
 			if err != nil {
