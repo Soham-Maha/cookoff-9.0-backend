@@ -38,3 +38,7 @@ WHERE id = $1;
 -- name: GetLeaderboard :many
 select id, name, score from users
 order by score;
+
+-- name: UpdateProfile :exec
+UPDATE users SET reg_no = $1, password = $2, name = $3
+WHERE id = $4;
