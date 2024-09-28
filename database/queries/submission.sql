@@ -97,7 +97,7 @@ WITH best_submissions AS (
     SELECT 
         s.user_id AS user_id,
         s.question_id,
-        MAX((s.testcases_passed) * q.points / (s.testcases_passed + s.testcases_failed)) AS best_score
+        MAX((s.testcases_passed) * q.points / (s.testcases_passed + s.testcases_failed)::numeric) AS best_score
     FROM submissions s
     INNER JOIN questions q ON s.question_id = q.id
     INNER JOIN users u on s.user_id = u.id 
