@@ -105,18 +105,6 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	loggedin, err := auth.RefreshTokenExist(r.Context(), user.ID.String())
-	if err != nil {
-		httphelpers.WriteError(w, http.StatusInternalServerError, "Error while checking cache")
-		logger.Errof(fmt.Sprintf("Error while checking cache %v", err.Error()))
-		return
-	}
-
-	if !loggedin {
-		httphelpers.WriteError(w, http.StatusForbidden, "Someone already logged in")
-		return
-	}
-
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password)); err != nil {
 		if errors.Is(err, bcrypt.ErrMismatchedHashAndPassword) {
 			httphelpers.WriteError(w, http.StatusConflict, "invalid password")

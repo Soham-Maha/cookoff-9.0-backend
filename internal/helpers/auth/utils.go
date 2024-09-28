@@ -22,7 +22,11 @@ func GetUserID(w http.ResponseWriter, r *http.Request) (uuid.UUID, error) {
 
 	userID, ok := claims["user_id"].(string)
 	if !ok {
-		httphelpers.WriteError(w, http.StatusUnauthorized, "unauthorized: user_id not found in claims")
+		httphelpers.WriteError(
+			w,
+			http.StatusUnauthorized,
+			"unauthorized: user_id not found in claims",
+		)
 		return uuid.UUID{}, fmt.Errorf("user_id not found in claims")
 	}
 
@@ -64,7 +68,7 @@ func RefreshTokenExist(ctx context.Context, userid string) (bool, error) {
 func CheckRefreshToken(ctx context.Context, userid string, token string) (bool, error) {
 	cacheToken, err := database.RedisClient.Get(ctx, userid).Result()
 	if err != nil {
-		return false, fmt.Errorf("Error while matching token from cache %v", err.Error())
+		return false, fmt.Errorf("error while matching token from cache %v", err.Error())
 	}
 
 	return token == cacheToken, nil

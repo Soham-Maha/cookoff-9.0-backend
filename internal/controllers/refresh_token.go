@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/CodeChefVIT/cookoff-backend/internal/helpers/auth"
-	helpers "github.com/CodeChefVIT/cookoff-backend/internal/helpers/auth"
 	"github.com/CodeChefVIT/cookoff-backend/internal/helpers/database"
 	httphelpers "github.com/CodeChefVIT/cookoff-backend/internal/helpers/http"
 	logger "github.com/CodeChefVIT/cookoff-backend/internal/helpers/logging"
@@ -24,7 +23,7 @@ func RefreshTokenHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	claims, err := jwtauth.VerifyToken(helpers.TokenAuth, cookie.Value)
+	claims, err := jwtauth.VerifyToken(auth.TokenAuth, cookie.Value)
 	if err != nil || claims == nil {
 		logger.Errof("Invalid refresh token: %v", err)
 		httphelpers.WriteError(w, http.StatusUnauthorized, "invalid refresh token: "+err.Error())
@@ -66,12 +65,11 @@ func RefreshTokenHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	accessToken, err := helpers.GenerateJWT(&user, false)
+	accessToken, err := auth.GenerateJWT(&user, false)
 	if err != nil {
 		httphelpers.WriteError(w, http.StatusInternalServerError, "failed to generate token")
 		return
 	}
-
 	http.SetCookie(w, &http.Cookie{
 		Name:     "jwt",
 		Value:    accessToken,
@@ -82,7 +80,7 @@ func RefreshTokenHandler(w http.ResponseWriter, r *http.Request) {
 		SameSite: http.SameSiteNoneMode,
 	})
 
-	refreshToken, err := helpers.GenerateJWT(&user, true)
+	refreshToken, err := auth.GenerateJWT(&user, true)
 	if err != nil {
 		httphelpers.WriteError(w, http.StatusInternalServerError, "failed to generate token")
 		return
