@@ -25,23 +25,6 @@ services:
     depends_on:
       - postgres
       - redis
-  nginx:
-    image: nginx:latest
-    ports:
-      - "80:80" # Replace 8080 with the desired port for your application
-      - "443:443"
-    volumes:
-      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf # Mount your Nginx configuration file
-      - ./certbot/www:/var/www/certbot/:ro
-      - ./certbot/conf/:/etc/nginx/ssl/:ro
-    depends_on:
-      - api # Nginx depends on the API service being available
-
-  certbot:
-    image: certbot/certbot:latest
-    volumes:
-      - ./certbot/www/:/var/www/certbot/:rw
-      - ./certbot/conf/:/etc/letsencrypt/:rw
 
 volumes:
   postgres_data:
