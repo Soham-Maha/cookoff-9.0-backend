@@ -3,6 +3,7 @@ package controllers
 import (
 	"errors"
 	"fmt"
+	"math/big"
 	"net/http"
 	"os"
 	"time"
@@ -13,7 +14,6 @@ import (
 	httphelpers "github.com/CodeChefVIT/cookoff-backend/internal/helpers/http"
 	logger "github.com/CodeChefVIT/cookoff-backend/internal/helpers/logging"
 	"github.com/CodeChefVIT/cookoff-backend/internal/helpers/validator"
-	"github.com/go-chi/jwtauth/v5"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -70,8 +70,14 @@ func SignUp(w http.ResponseWriter, r *http.Request) {
 		Password:       string(hashed),
 		Role:           "user",
 		RoundQualified: 0,
-		Score:          pgtype.Numeric{},
-		Name:           payload.Name,
+		Score: pgtype.Numeric{
+			Int:              big.NewInt(0),
+			Exp:              0,
+			NaN:              false,
+			InfinityModifier: 0,
+			Valid:            true,
+		},
+		Name: payload.Name,
 	})
 	if err != nil {
 		httphelpers.WriteError(w, http.StatusInternalServerError, err.Error())
@@ -176,26 +182,6 @@ func Logout(w http.ResponseWriter, r *http.Request) {
 	refresh, err := r.Cookie("refresh_token")
 	if err != nil && !errors.Is(err, http.ErrNoCookie) {
 		httphelpers.WriteError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-
-	claims, err := jwtauth.VerifyToken(auth.TokenAuth, jwt.Value)
-	if err != nil || claims == nil {
-		logger.Errof("Invalid refresh token: %v", err)
-		httphelpers.WriteError(w, http.StatusUnauthorized, "invalid refresh token: "+err.Error())
-		return
-	}
-
-	userId, ok := claims.PrivateClaims()["user_id"].(string)
-	if !ok {
-		logger.Errof("Invalid token claims, user_id not found")
-		httphelpers.WriteError(w, http.StatusUnauthorized, "invalid token claims")
-		return
-	}
-
-	err = database.RedisClient.Del(r.Context(), userId).Err()
-	if err != nil {
-		httphelpers.WriteError(w, http.StatusInternalServerError, "Error remove token from cache")
 		return
 	}
 
