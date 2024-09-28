@@ -11,7 +11,6 @@ import (
 	logger "github.com/CodeChefVIT/cookoff-backend/internal/helpers/logging"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
-	"golang.org/x/crypto/bcrypt"
 )
 
 type DashboardSubmission struct {
@@ -22,10 +21,9 @@ type DashboardSubmission struct {
 }
 
 type UpdateUserReq struct {
-	ID       uuid.UUID `json:"id"`
-	RegNo    string    `json:"reg_no"`
-	Password string    `json:"password"`
-	Name     string    `json:"name"`
+	ID    uuid.UUID `json:"id"`
+	RegNo string    `json:"reg_no"`
+	Name  string    `json:"name"`
 }
 
 func MeHandler(w http.ResponseWriter, r *http.Request) {
@@ -111,20 +109,11 @@ func UpdateUser(w http.ResponseWriter, r *http.Request) {
 	if updateUser.Name != "" {
 		user.Name = updateUser.Name
 	}
-	if updateUser.Password != "" {
-		hashed, err := bcrypt.GenerateFromPassword([]byte(updateUser.Password), 10)
-		if err != nil {
-			httphelpers.WriteError(w, http.StatusInternalServerError, err.Error())
-			return
-		}
-		user.Password = string(hashed)
-	}
 
 	err = database.Queries.UpdateProfile(ctx, db.UpdateProfileParams{
-		ID:       id,
-		RegNo:    user.RegNo,
-		Name:     user.Name,
-		Password: user.Password,
+		ID:    id,
+		RegNo: user.RegNo,
+		Name:  user.Name,
 	})
 
 	if err != nil {
@@ -135,9 +124,8 @@ func UpdateUser(w http.ResponseWriter, r *http.Request) {
 	httphelpers.WriteJSON(w, http.StatusOK, map[string]any{
 		"message": "profile updated",
 		"data": map[string]any{
-			"reg_no":   user.RegNo,
-			"name":     user.Name,
-			"password": user.Password,
+			"reg_no": user.RegNo,
+			"name":   user.Name,
 		},
 	})
 
