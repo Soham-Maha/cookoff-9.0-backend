@@ -30,6 +30,7 @@ type Submission struct {
 	TestcasesFailed pgtype.Int4
 	Runtime         pgtype.Numeric
 	SubmissionTime  pgtype.Timestamp
+	SourceCode      string
 	LanguageID      int32
 	Description     *string
 	Memory          pgtype.Numeric

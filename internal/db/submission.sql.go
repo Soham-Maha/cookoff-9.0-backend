@@ -13,8 +13,8 @@ import (
 )
 
 const createSubmission = `-- name: CreateSubmission :exec
-INSERT INTO submissions (id, user_id, question_id, language_id)
-VALUES ($1, $2, $3, $4)
+INSERT INTO submissions (id, user_id, question_id, language_id, source_code)
+VALUES ($1, $2, $3, $4, $5)
 `
 
 type CreateSubmissionParams struct {
@@ -22,6 +22,7 @@ type CreateSubmissionParams struct {
 	UserID     uuid.NullUUID
 	QuestionID uuid.UUID
 	LanguageID int32
+	SourceCode string
 }
 
 func (q *Queries) CreateSubmission(ctx context.Context, arg CreateSubmissionParams) error {
@@ -30,6 +31,7 @@ func (q *Queries) CreateSubmission(ctx context.Context, arg CreateSubmissionPara
 		arg.UserID,
 		arg.QuestionID,
 		arg.LanguageID,
+		arg.SourceCode,
 	)
 	return err
 }
@@ -100,6 +102,43 @@ func (q *Queries) GetSubmissionByID(ctx context.Context, id uuid.UUID) (GetSubmi
 	return i, err
 }
 
+const getSubmissionByUser = `-- name: GetSubmissionByUser :many
+SELECT id, question_id, testcases_passed, testcases_failed, runtime, submission_time, source_code, language_id, description, memory, user_id, status FROM submissions WHERE user_id = $1
+`
+
+func (q *Queries) GetSubmissionByUser(ctx context.Context, userID uuid.NullUUID) ([]Submission, error) {
+	rows, err := q.db.Query(ctx, getSubmissionByUser, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Submission
+	for rows.Next() {
+		var i Submission
+		if err := rows.Scan(
+			&i.ID,
+			&i.QuestionID,
+			&i.TestcasesPassed,
+			&i.TestcasesFailed,
+			&i.Runtime,
+			&i.SubmissionTime,
+			&i.SourceCode,
+			&i.LanguageID,
+			&i.Description,
+			&i.Memory,
+			&i.UserID,
+			&i.Status,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getSubmissionResultsBySubmissionID = `-- name: GetSubmissionResultsBySubmissionID :many
 SELECT 
     id,
@@ -160,7 +199,7 @@ func (q *Queries) GetSubmissionStatusByID(ctx context.Context, id uuid.UUID) (*s
 const getSubmissionsWithRoundByUserId = `-- name: GetSubmissionsWithRoundByUserId :many
 WITH RankedSubmissions AS (
   SELECT 
-    s.id, s.question_id, s.testcases_passed, s.testcases_failed, s.runtime, s.submission_time, s.language_id, s.description, s.memory, s.user_id, s.status,
+    s.id, s.question_id, s.testcases_passed, s.testcases_failed, s.runtime, s.submission_time, s.source_code, s.language_id, s.description, s.memory, s.user_id, s.status,
     q.round,
     q.title,
     q.description AS question_description,

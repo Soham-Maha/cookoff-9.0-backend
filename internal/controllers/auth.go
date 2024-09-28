@@ -77,7 +77,7 @@ func SignUp(w http.ResponseWriter, r *http.Request) {
 			InfinityModifier: 0,
 			Valid:            true,
 		},
-		Name: payload.Name,
+		Name:           payload.Name,
 	})
 	if err != nil {
 		httphelpers.WriteError(w, http.StatusInternalServerError, err.Error())

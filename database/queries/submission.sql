@@ -1,6 +1,6 @@
 -- name: CreateSubmission :exec
-INSERT INTO submissions (id, user_id, question_id, language_id)
-VALUES ($1, $2, $3, $4);
+INSERT INTO submissions (id, user_id, question_id, language_id, source_code)
+VALUES ($1, $2, $3, $4, $5);
 
 -- name: GetTestCases :many
 SELECT * 
@@ -124,3 +124,6 @@ FROM
     submission_results
 WHERE 
     submission_id = $1;
+
+-- name: GetSubmissionByUser :many
+SELECT * FROM submissions WHERE user_id = $1;

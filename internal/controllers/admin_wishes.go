@@ -8,6 +8,7 @@ import (
 	"github.com/CodeChefVIT/cookoff-backend/internal/db"
 	"github.com/CodeChefVIT/cookoff-backend/internal/helpers/database"
 	httphelpers "github.com/CodeChefVIT/cookoff-backend/internal/helpers/http"
+	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 )
 
@@ -132,6 +133,22 @@ func UnbanUser(w http.ResponseWriter, r *http.Request) {
 		http.StatusOK,
 		map[string]string{"message": "User unbanned successfully"},
 	)
+}
+
+func GetSubmissionByUser(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "user_id")
+	uid, err := uuid.Parse(id)
+	if err != nil {
+		httphelpers.WriteError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	sub, err := database.Queries.GetSubmissionByUser(r.Context(), uuid.NullUUID{UUID: uid, Valid: true})
+	if err != nil {
+		httphelpers.WriteError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	fmt.Println(sub)
+	httphelpers.WriteJSON(w, http.StatusAccepted, map[string]interface{}{"data": sub})
 }
 
 type RoundRequest struct {

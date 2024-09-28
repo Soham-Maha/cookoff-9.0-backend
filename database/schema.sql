@@ -33,6 +33,7 @@ CREATE TABLE submissions (
 	testcases_failed INTEGER DEFAULT 0,
 	runtime DECIMAL,
 	submission_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+	source_code TEXT NOT NULL,
 	language_id INTEGER NOT NULL,
 	description TEXT,
 	memory NUMERIC,

@@ -57,6 +57,7 @@ func (s *Server) RegisterRoutes(taskClient *asynq.Client) http.Handler {
 		adminRoutes.Get("/questions", controllers.GetAllQuestion)
 		adminRoutes.Get("/question/{question_id}", controllers.GetQuestionById)
 		adminRoutes.Delete("/question/{question_id}", controllers.DeleteQuestion)
+		adminRoutes.Get("/submission/{user_id}", controllers.GetSubmissionByUser)
 		adminRoutes.Patch("/question", controllers.UpdateQuestion)
 		adminRoutes.Post("/upgrade", controllers.UpgradeUserToRound)
 		adminRoutes.Post("/roast", controllers.BanUser)

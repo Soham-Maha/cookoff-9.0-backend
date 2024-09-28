@@ -149,6 +149,7 @@ func SubmitCode(w http.ResponseWriter, r *http.Request) {
 		UserID:     nullUserID,
 		QuestionID: question_id,
 		LanguageID: int32(req.LanguageID),
+		SourceCode: req.SourceCode,
 	})
 	if err != nil {
 		logger.Errof("Error creating submission in database: %v", err)
