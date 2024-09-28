@@ -9,7 +9,6 @@ import (
 
 	"github.com/CodeChefVIT/cookoff-backend/internal/db"
 	"github.com/CodeChefVIT/cookoff-backend/internal/helpers/auth"
-	helpers "github.com/CodeChefVIT/cookoff-backend/internal/helpers/auth"
 	"github.com/CodeChefVIT/cookoff-backend/internal/helpers/database"
 	httphelpers "github.com/CodeChefVIT/cookoff-backend/internal/helpers/http"
 	logger "github.com/CodeChefVIT/cookoff-backend/internal/helpers/logging"
@@ -124,6 +123,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		httphelpers.WriteError(w, http.StatusInternalServerError, err.Error())
+		return
 	}
 
 	accessToken, err := auth.GenerateJWT(&user, false)
@@ -191,7 +191,7 @@ func Logout(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	claims, err := jwtauth.VerifyToken(helpers.TokenAuth, jwt.Value)
+	claims, err := jwtauth.VerifyToken(auth.TokenAuth, jwt.Value)
 	if err != nil || claims == nil {
 		logger.Errof("Invalid refresh token: %v", err)
 		httphelpers.WriteError(w, http.StatusUnauthorized, "invalid refresh token: "+err.Error())

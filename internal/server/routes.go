@@ -27,30 +27,30 @@ func (s *Server) RegisterRoutes(taskClient *asynq.Client) http.Handler {
 	r.Post("/token/refresh", controllers.RefreshTokenHandler)
 	r.Post("/logout", controllers.Logout)
 
-	
 	r.Group(func(protected chi.Router) {
 		protected.Use(jwtauth.Verifier(auth.TokenAuth))
 		protected.Use(jwtauth.Authenticator(auth.TokenAuth))
 		protected.Use(middlewares.BanCheckMiddleware)
-		
-		protected.Get("/result/{submission_id}", controllers.GetResult)
+
 		protected.Get("/me", controllers.MeHandler)
 		protected.Get("/protected", controllers.ProtectedHandler)
-		
+
 		protected.Patch("/update/profile", controllers.UpdateUser)
 
-		protected.Post(
-			"/submit",
-			controllers.SubmitCode,
-		)
-		protected.Post(
-			"/runcode",
-			controllers.RunCode,
-		)
-		protected.Get(
+		roundLocked := protected.With(middlewares.CheckRound)
+		roundLocked.Get(
 			"/question/round",
 			controllers.GetQuestionsByRound,
 		)
+		roundLocked.Post(
+			"/submit",
+			controllers.SubmitCode,
+		)
+		roundLocked.Post(
+			"/runcode",
+			controllers.RunCode,
+		)
+		roundLocked.Get("/result/{submission_id}", controllers.GetResult)
 
 		adminRoutes := protected.With(middlewares.RoleAuthorizationMiddleware("admin"))
 		adminRoutes.Post("/question/create", controllers.CreateQuestion)
