@@ -99,8 +99,9 @@ WITH best_submissions AS (
         s.question_id,
         MAX((s.testcases_passed) * q.points / (s.testcases_passed + s.testcases_failed)) AS best_score
     FROM submissions s
-    JOIN questions q ON s.question_id = q.id
-    WHERE s.id = $1
+    INNER JOIN questions q ON s.question_id = q.id
+    INNER JOIN users u on s.user_id = u.id 
+    WHERE s.id = $1 AND q.round = u.round_qualified
     GROUP BY s.user_id, s.question_id
 )
 UPDATE users
