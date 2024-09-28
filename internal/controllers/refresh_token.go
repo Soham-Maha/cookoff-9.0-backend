@@ -2,7 +2,9 @@ package controllers
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/CodeChefVIT/cookoff-backend/internal/helpers/auth"
 	helpers "github.com/CodeChefVIT/cookoff-backend/internal/helpers/auth"
@@ -79,6 +81,29 @@ func RefreshTokenHandler(w http.ResponseWriter, r *http.Request) {
 		Path:     "/",
 		SameSite: http.SameSiteNoneMode,
 	})
+
+	refreshToken, err := helpers.GenerateJWT(&user, true)
+	if err != nil {
+		httphelpers.WriteError(w, http.StatusInternalServerError, "failed to generate token")
+		return
+	}
+	http.SetCookie(w, &http.Cookie{
+		Name:     "refresh_token",
+		Value:    refreshToken,
+		MaxAge:   3600,
+		HttpOnly: true,
+		Secure:   true,
+		Path:     "/",
+		SameSite: http.SameSiteNoneMode,
+	})
+
+	expiration := (time.Hour + 25*time.Minute)
+	err = database.RedisClient.Set(r.Context(), user.ID.String(), refreshToken, expiration).Err()
+	if err != nil {
+		httphelpers.WriteError(w, http.StatusInternalServerError, "failed to set token in cache")
+		logger.Errof(fmt.Sprintf("failed to set token in cache %v", err.Error()))
+		return
+	}
 
 	httphelpers.WriteJSON(w, http.StatusOK, map[string]string{
 		"message": "Token refreshed",
