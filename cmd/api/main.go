@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/CodeChefVIT/cookoff-backend/internal/helpers/auth"
 	database "github.com/CodeChefVIT/cookoff-backend/internal/helpers/database"
@@ -23,7 +24,8 @@ func main() {
 	submission.Init(database.RedisClient)
 	validator.InitValidator()
 
-	taskServer, taskClient := queue.InitQueue("redis:6379", 2)
+	redisURI := fmt.Sprintf("%s:%s", os.Getenv("REDIS_HOST"), "6379")
+	taskServer, taskClient := queue.InitQueue(redisURI, 2)
 
 	go func() {
 		mux := asynq.NewServeMux()
