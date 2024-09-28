@@ -170,7 +170,7 @@ WITH RankedSubmissions AS (
     ) AS rank
   FROM submissions s
   INNER JOIN questions q ON s.question_id = q.id
-  WHERE s.user_id = $1
+  WHERE s.user_id = $1 and s.status = 'DONE'
 )
 SELECT 
   rs.id,
