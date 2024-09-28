@@ -58,7 +58,7 @@ func (s *Server) RegisterRoutes(taskClient *asynq.Client) http.Handler {
 		adminRoutes.Post("/upgrade", controllers.UpgradeUserToRound)
 		adminRoutes.Post("/roast", controllers.BanUser)
 		adminRoutes.Post("/unroast", controllers.UnbanUser)
-		adminRoutes.Post("/round/", controllers.SetRoundStatus)
+		adminRoutes.Post("/round/enable", controllers.EnableRound)
 		adminRoutes.Get("/users", controllers.GetAllUsers)
 		adminRoutes.Get("/leaderboard", controllers.GetLeaderboard)
 
