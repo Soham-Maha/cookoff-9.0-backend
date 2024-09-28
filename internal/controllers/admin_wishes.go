@@ -53,11 +53,19 @@ func UpgradeUserToRound(w http.ResponseWriter, r *http.Request) {
 	err := database.Queries.UpgradeUsersToRound(ctx, upgradeParams)
 	if err != nil {
 		log.Println("Error in upgrading the user :- ", err)
-		httphelpers.WriteError(w, http.StatusInternalServerError, "Unable to upgrade users to round")
+		httphelpers.WriteError(
+			w,
+			http.StatusInternalServerError,
+			"Unable to upgrade users to round",
+		)
 		return
 	}
 
-	httphelpers.WriteJSON(w, http.StatusOK, map[string]string{"message": "Users upgraded successfully"})
+	httphelpers.WriteJSON(
+		w,
+		http.StatusOK,
+		map[string]string{"message": "Users upgraded successfully"},
+	)
 }
 
 func BanUser(w http.ResponseWriter, r *http.Request) {
@@ -86,8 +94,13 @@ func BanUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	httphelpers.WriteJSON(w, http.StatusOK, map[string]string{"message": "User banned successfully"})
+	httphelpers.WriteJSON(
+		w,
+		http.StatusOK,
+		map[string]string{"message": "User banned successfully"},
+	)
 }
+
 func UnbanUser(w http.ResponseWriter, r *http.Request) {
 	var requestBody map[string]string
 	if err := httphelpers.ParseJSON(r, &requestBody); err != nil {
@@ -114,14 +127,18 @@ func UnbanUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	httphelpers.WriteJSON(w, http.StatusOK, map[string]string{"message": "User unbanned successfully"})
+	httphelpers.WriteJSON(
+		w,
+		http.StatusOK,
+		map[string]string{"message": "User unbanned successfully"},
+	)
 }
 
 type RoundRequest struct {
 	RoundID int `json:"round_id"`
 }
 
-func SetRoundStatus(w http.ResponseWriter, r *http.Request) {
+func EnableRound(w http.ResponseWriter, r *http.Request) {
 	var reqBody RoundRequest
 	if err := httphelpers.ParseJSON(r, &reqBody); err != nil {
 		httphelpers.WriteError(w, http.StatusBadRequest, "Invalid request payload")
@@ -136,5 +153,10 @@ func SetRoundStatus(w http.ResponseWriter, r *http.Request) {
 		httphelpers.WriteError(w, http.StatusInternalServerError, "Failed to enable round")
 		return
 	}
-	httphelpers.WriteJSON(w, http.StatusOK, map[string]string{"message": "Round enabled successfully"})
+
+	httphelpers.WriteJSON(
+		w,
+		http.StatusOK,
+		map[string]string{"message": "Round enabled successfully"},
+	)
 }
