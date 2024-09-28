@@ -71,7 +71,7 @@ func MeHandler(w http.ResponseWriter, r *http.Request) {
 	data := map[string]any{
 		"username":    user.Name,
 		"round":       user.RoundQualified,
-		"score":       user.Score.Int32,
+		"score":       user.Score,
 		"submissions": submissionsByRound,
 	}
 	httphelpers.WriteJSON(w, http.StatusOK, map[string]any{

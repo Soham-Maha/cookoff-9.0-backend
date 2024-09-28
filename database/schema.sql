@@ -5,7 +5,7 @@ CREATE TABLE users (
 	password TEXT NOT NULL,
 	role TEXT NOT NULL,
 	round_qualified INTEGER NOT NULL DEFAULT 0,
-	score INTEGER DEFAULT 0,
+	score NUMERIC DEFAULT 0,
 	name TEXT NOT NULL,
 	is_banned BOOLEAN NOT NULL DEFAULT false,
 	PRIMARY KEY(id)
