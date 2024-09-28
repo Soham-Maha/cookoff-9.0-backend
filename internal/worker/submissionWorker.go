@@ -66,6 +66,24 @@ func ProcessSubmissionTask(ctx context.Context, t *asynq.Task) error {
 	// testcasesFailed := int(sub.TestcasesFailed.Int32)
 
 	switch data.Status.ID {
+	case "1":
+		err = handleCompilationError(
+			ctx,
+			idUUID,
+			data,
+			int(timeValue*1000),
+			testidUUID,
+			"In Queue",
+		)
+	case "2":
+		err = handleCompilationError(
+			ctx,
+			idUUID,
+			data,
+			int(timeValue*1000),
+			testidUUID,
+			"Processing",
+		)
 	case "3":
 		// testcasesPassed++
 		err = handleCompilationError(ctx, idUUID, data, int(timeValue*1000), testidUUID, "success")
