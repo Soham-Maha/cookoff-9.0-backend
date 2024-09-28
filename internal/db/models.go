@@ -64,7 +64,7 @@ type User struct {
 	Password       string
 	Role           string
 	RoundQualified int32
-	Score          pgtype.Int4
+	Score          pgtype.Numeric
 	Name           string
 	IsBanned       bool
 }

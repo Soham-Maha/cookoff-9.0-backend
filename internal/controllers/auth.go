@@ -70,7 +70,7 @@ func SignUp(w http.ResponseWriter, r *http.Request) {
 		Password:       string(hashed),
 		Role:           "user",
 		RoundQualified: 0,
-		Score:          pgtype.Int4{},
+		Score:          pgtype.Numeric{},
 		Name:           payload.Name,
 	})
 	if err != nil {

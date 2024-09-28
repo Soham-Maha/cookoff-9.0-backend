@@ -36,7 +36,7 @@ type CreateUserParams struct {
 	Password       string
 	Role           string
 	RoundQualified int32
-	Score          pgtype.Int4
+	Score          pgtype.Numeric
 	Name           string
 }
 
@@ -109,7 +109,7 @@ order by score
 type GetLeaderboardRow struct {
 	ID    uuid.UUID
 	Name  string
-	Score pgtype.Int4
+	Score pgtype.Numeric
 }
 
 func (q *Queries) GetLeaderboard(ctx context.Context) ([]GetLeaderboardRow, error) {
