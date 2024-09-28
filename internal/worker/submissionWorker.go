@@ -79,6 +79,15 @@ func ProcessSubmissionTask(ctx context.Context, t *asynq.Task) error {
 			testidUUID,
 			"wrong answer",
 		)
+	case "5":
+		err = handleCompilationError(
+			ctx,
+			idUUID,
+			data,
+			int(timeValue*1000),
+			testidUUID,
+			"Time Limit Exceeded",
+		)
 	case "6":
 		// testcasesFailed++
 		err = handleCompilationError(
@@ -89,7 +98,7 @@ func ProcessSubmissionTask(ctx context.Context, t *asynq.Task) error {
 			testidUUID,
 			"Compilation error",
 		)
-	case "11":
+	case "7", "8", "9", "10", "11", "12":
 		// testcasesFailed++
 		err = handleCompilationError(
 			ctx,
@@ -98,6 +107,24 @@ func ProcessSubmissionTask(ctx context.Context, t *asynq.Task) error {
 			int(timeValue*1000),
 			testidUUID,
 			"Runtime error",
+		)
+	case "13":
+		err = handleCompilationError(
+			ctx,
+			idUUID,
+			data,
+			int(timeValue*1000),
+			testidUUID,
+			"Internal Error",
+		)
+	case "14":
+		err = handleCompilationError(
+			ctx,
+			idUUID,
+			data,
+			int(timeValue*1000),
+			testidUUID,
+			"Exec Format Error",
 		)
 	}
 
