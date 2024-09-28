@@ -68,22 +68,6 @@ func RefreshTokenHandler(w http.ResponseWriter, r *http.Request) {
 		SameSite: http.SameSiteNoneMode,
 	})
 
-	refreshToken, err := helpers.GenerateJWT(&user, true)
-	if err != nil {
-		httphelpers.WriteError(w, http.StatusInternalServerError, "failed to generate token")
-		return
-	}
-
-	http.SetCookie(w, &http.Cookie{
-		Name:     "refresh_token",
-		Value:    refreshToken,
-		MaxAge:   3600,
-		HttpOnly: true,
-		Secure:   true,
-		Path:     "/",
-		SameSite: http.SameSiteNoneMode,
-	})
-
 	httphelpers.WriteJSON(w, http.StatusOK, map[string]string{
 		"message": "Token refreshed",
 	})
