@@ -95,13 +95,13 @@ WHERE id = $1;
 -- name: UpdateScore :exec
 WITH best_submissions AS (
     SELECT 
-        s.user_id,
+        s.user_id AS user_id,
         s.question_id,
         MAX((s.testcases_passed) * q.points / (s.testcases_passed + s.testcases_failed)) AS best_score
     FROM submissions s
     INNER JOIN questions q ON s.question_id = q.id
     INNER JOIN users u on s.user_id = u.id 
-    WHERE s.id = $1 AND q.round = u.round_qualified
+    WHERE s.user_id = (select user_id from submissions where id = $1) AND q.round = u.round_qualified
     GROUP BY s.user_id, s.question_id
 )
 UPDATE users
@@ -109,7 +109,7 @@ SET score = (
     SELECT SUM(best_score)
     FROM best_submissions
 )
-WHERE users.id = (SELECT distinct(user_id) FROM best_submissions LIMIT 1);
+WHERE users.id = (select user_id from submissions s where s.id = $1);
 
 -- name: GetSubmissionResultsBySubmissionID :many
 SELECT 

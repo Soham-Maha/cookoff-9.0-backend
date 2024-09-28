@@ -30,5 +30,6 @@ main
 *templ.go
 
 certbot
-nginx/nginx.conf
+./nginx/nginx.conf
 nginx/
+**.conf
