@@ -66,6 +66,24 @@ func ProcessSubmissionTask(ctx context.Context, t *asynq.Task) error {
 	// testcasesFailed := int(sub.TestcasesFailed.Int32)
 
 	switch data.Status.ID {
+	case "1":
+		err = handleCompilationError(
+			ctx,
+			idUUID,
+			data,
+			int(timeValue*1000),
+			testidUUID,
+			"In Queue",
+		)
+	case "2":
+		err = handleCompilationError(
+			ctx,
+			idUUID,
+			data,
+			int(timeValue*1000),
+			testidUUID,
+			"Processing",
+		)
 	case "3":
 		// testcasesPassed++
 		err = handleCompilationError(ctx, idUUID, data, int(timeValue*1000), testidUUID, "success")
@@ -79,6 +97,15 @@ func ProcessSubmissionTask(ctx context.Context, t *asynq.Task) error {
 			testidUUID,
 			"wrong answer",
 		)
+	case "5":
+		err = handleCompilationError(
+			ctx,
+			idUUID,
+			data,
+			int(timeValue*1000),
+			testidUUID,
+			"Time Limit Exceeded",
+		)
 	case "6":
 		// testcasesFailed++
 		err = handleCompilationError(
@@ -89,7 +116,7 @@ func ProcessSubmissionTask(ctx context.Context, t *asynq.Task) error {
 			testidUUID,
 			"Compilation error",
 		)
-	case "11":
+	case "7", "8", "9", "10", "11", "12":
 		// testcasesFailed++
 		err = handleCompilationError(
 			ctx,
@@ -98,6 +125,24 @@ func ProcessSubmissionTask(ctx context.Context, t *asynq.Task) error {
 			int(timeValue*1000),
 			testidUUID,
 			"Runtime error",
+		)
+	case "13":
+		err = handleCompilationError(
+			ctx,
+			idUUID,
+			data,
+			int(timeValue*1000),
+			testidUUID,
+			"Internal Error",
+		)
+	case "14":
+		err = handleCompilationError(
+			ctx,
+			idUUID,
+			data,
+			int(timeValue*1000),
+			testidUUID,
+			"Exec Format Error",
 		)
 	}
 
