@@ -236,7 +236,7 @@ func (q *Queries) UpdateProfile(ctx context.Context, arg UpdateProfileParams) er
 
 const upgradeUsersToRound = `-- name: UpgradeUsersToRound :exec
 UPDATE users
-SET round_qualified = GREATEST(round_qualified, $2)
+SET round_qualified = $2
 WHERE id::TEXT = ANY($1::TEXT[])
 `
 

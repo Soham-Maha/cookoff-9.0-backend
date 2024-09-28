@@ -23,7 +23,7 @@ FROM users;
 
 -- name: UpgradeUsersToRound :exec
 UPDATE users
-SET round_qualified = GREATEST(round_qualified, $2)
+SET round_qualified = $2
 WHERE id::TEXT = ANY($1::TEXT[]);
 
 -- name: BanUser :exec
@@ -42,3 +42,4 @@ order by score;
 -- name: UpdateProfile :exec
 UPDATE users SET reg_no = $1, password = $2, name = $3
 WHERE id = $4;
+
