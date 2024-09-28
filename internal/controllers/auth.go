@@ -2,16 +2,19 @@ package controllers
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"os"
 	"time"
 
 	"github.com/CodeChefVIT/cookoff-backend/internal/db"
 	"github.com/CodeChefVIT/cookoff-backend/internal/helpers/auth"
+	helpers "github.com/CodeChefVIT/cookoff-backend/internal/helpers/auth"
 	"github.com/CodeChefVIT/cookoff-backend/internal/helpers/database"
 	httphelpers "github.com/CodeChefVIT/cookoff-backend/internal/helpers/http"
 	logger "github.com/CodeChefVIT/cookoff-backend/internal/helpers/logging"
 	"github.com/CodeChefVIT/cookoff-backend/internal/helpers/validator"
+	"github.com/go-chi/jwtauth/v5"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -103,6 +106,18 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	loggedin, err := auth.RefreshTokenExist(r.Context(), user.ID.String())
+	if err != nil {
+		httphelpers.WriteError(w, http.StatusInternalServerError, "Error while checking cache")
+		logger.Errof(fmt.Sprintf("Error while checking cache %v", err.Error()))
+		return
+	}
+
+	if !loggedin {
+		httphelpers.WriteError(w, http.StatusForbidden, "Someone already logged in")
+		return
+	}
+
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password)); err != nil {
 		if errors.Is(err, bcrypt.ErrMismatchedHashAndPassword) {
 			httphelpers.WriteError(w, http.StatusConflict, "invalid password")
@@ -120,6 +135,14 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	refreshToken, err := auth.GenerateJWT(&user, true)
 	if err != nil {
 		httphelpers.WriteError(w, http.StatusInternalServerError, "failed to generate token")
+		return
+	}
+
+	expiration := (time.Hour + 25*time.Minute)
+	err = database.RedisClient.Set(r.Context(), user.ID.String(), refreshToken, expiration).Err()
+	if err != nil {
+		httphelpers.WriteError(w, http.StatusInternalServerError, "failed to set token in cache")
+		logger.Errof(fmt.Sprintf("failed to set token in cache %v", err.Error()))
 		return
 	}
 
@@ -165,6 +188,26 @@ func Logout(w http.ResponseWriter, r *http.Request) {
 	refresh, err := r.Cookie("refresh_token")
 	if err != nil && !errors.Is(err, http.ErrNoCookie) {
 		httphelpers.WriteError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	claims, err := jwtauth.VerifyToken(helpers.TokenAuth, jwt.Value)
+	if err != nil || claims == nil {
+		logger.Errof("Invalid refresh token: %v", err)
+		httphelpers.WriteError(w, http.StatusUnauthorized, "invalid refresh token: "+err.Error())
+		return
+	}
+
+	userId, ok := claims.PrivateClaims()["user_id"].(string)
+	if !ok {
+		logger.Errof("Invalid token claims, user_id not found")
+		httphelpers.WriteError(w, http.StatusUnauthorized, "invalid token claims")
+		return
+	}
+
+	err = database.RedisClient.Del(r.Context(), userId).Err()
+	if err != nil {
+		httphelpers.WriteError(w, http.StatusInternalServerError, "Error remove token from cache")
 		return
 	}
 

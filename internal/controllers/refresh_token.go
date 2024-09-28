@@ -4,6 +4,7 @@ import (
 	"errors"
 	"net/http"
 
+	"github.com/CodeChefVIT/cookoff-backend/internal/helpers/auth"
 	helpers "github.com/CodeChefVIT/cookoff-backend/internal/helpers/auth"
 	"github.com/CodeChefVIT/cookoff-backend/internal/helpers/database"
 	httphelpers "github.com/CodeChefVIT/cookoff-backend/internal/helpers/http"
@@ -32,6 +33,17 @@ func RefreshTokenHandler(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		logger.Errof("Invalid token claims, user_id not found")
 		httphelpers.WriteError(w, http.StatusUnauthorized, "invalid token claims")
+		return
+	}
+
+	check, err := auth.CheckRefreshToken(r.Context(), userId, cookie.Value)
+	if err != nil {
+		httphelpers.WriteError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	if !check {
+		httphelpers.WriteError(w, http.StatusUnauthorized, "Token does not match with cache token")
 		return
 	}
 
